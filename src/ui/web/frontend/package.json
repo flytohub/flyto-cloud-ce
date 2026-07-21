@@ -27,7 +27,7 @@
     "@vue-flow/minimap": "^1.5.4",
     "axios": "^1.16.0",
     "chart.js": "^4.5.1",
-    "circle-flags": "^2.8.2",
+    "circle-flags": "^2.8.3",
     "dompurify": "^3.4.10",
     "highlight.js": "^11.11.1",
     "js-yaml": "^4.2.0",
