@@ -105,6 +105,7 @@
     "docs/open-core.md",
     "docs/versioning-and-compatibility.md",
     "install/Dockerfile.ce",
+    "install/.env.ce.example",
     "install/docker-compose.ce.yml",
     "scripts/audit-cloud-ce-boundary.py",
     "scripts/audit_ce_dependencies.py",
