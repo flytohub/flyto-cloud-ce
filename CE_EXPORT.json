@@ -24,10 +24,10 @@
     "install/Dockerfile.ce.dockerignore": "0f59d685d4e0fab92b697bba7571204251c93c3e73892089d2b11b053a5e7d4a",
     "install/docker-compose.ce.yml": "26f3e64dce4546048b81bcf76943d3879105fcd00e8aa07b7f65c2abb7290791",
     "logo.png": "3d91273904c0eb001fa402e7f4c180b819784fed9e9e099217fc7f755b397490",
-    "scripts/audit-cloud-ce-boundary.py": "9cb179b5d547512ca40175177a9f63f401440b4056b74f20a24df9629e4f6f15",
+    "scripts/audit-cloud-ce-boundary.py": "2e4cf6939d1828a66c3b6782ba54d5f6cb7e19ce49d78f229172a2225ff3ef74",
     "scripts/audit_ce_dependencies.py": "c4919e64eb3466f621e4ce4ad570565227b34e2df9a3d37563836fe25e399ff1",
     "scripts/check_dco.py": "581c18cb56f31dfae9a27a84a953fd751c96e19c1355144e4490cd30b19c1489",
-    "scripts/generate_ce_sbom.py": "76e7c07afb97892d9bc32906a42af2d1a10d604e685d6d08706bf4aee366a962",
+    "scripts/generate_ce_sbom.py": "8d39771a6163ba5ac67c9d79a84d6fd23c9258aa98df78e7649b0e43c44aa0cc",
     "src/ui/web/backend/.coveragerc": "92100ee8e6f953435e180ae6803aa8edb58a9891e352c6afdf52f026dc6386b9",
     "src/ui/web/backend/.gitignore": "88d1099650ee449edf68179321b1fbfb215d89a5170e36a4d6371141027bc9dd",
     "src/ui/web/backend/__init__.py": "eb173e534a60e13b455276416b5bfe9a86632aacc3aa34d1004366d5badd0f6e",
@@ -353,7 +353,7 @@
     "src/ui/web/backend/local/wake_daemon.py": "1740bc8241c986bda1732928a44f72cbdc9193fbe35f606c79e642f913d57242",
     "src/ui/web/backend/local/wake_management.py": "8a6e789dadee6c0e5a6a7fc33532a9b0278b2897af03a6aa753f46817e633959",
     "src/ui/web/backend/local/websocket_routes.py": "ae60727ef8f4ef302dfb69e145f93cdda51d8e47a23127f3c4c506dab41b973e",
-    "src/ui/web/backend/main_offline.py": "760a7328f1ab1a927c6d5ad652f5b8ff5f8cd5caf6631154aa00c20241af66ad",
+    "src/ui/web/backend/main_offline.py": "e142dd965f73cc638a88507d7078b157d6a7a5dcf0d36baaf127db0b9da939f2",
     "src/ui/web/backend/mcp_server.py": "c4a35d5aee1f6c1dac21515011ebc0ab8462a0ff3864b7dcce865e097dfdc38c",
     "src/ui/web/backend/middleware/__init__.py": "e9650eab6d8ca069b9668020a0f85bc40e69cda97eafcb55e3ea26f33e7a7364",
     "src/ui/web/backend/middleware/cache.py": "622c5d41f8532215d88ef0dd4590c9aca9a80e80686a96aa1f53a4aa759e3e18",
@@ -1732,7 +1732,7 @@
   },
   "package_name": "flyto-cloud-ce",
   "schema": "flyto.ce-release.v1",
-  "source_commit": "8bb4a84924a8ebea23319712968a2ddb4c739c5e",
+  "source_commit": "57790a7eb5026127ba54e63dda08e9c05a11dc4c",
   "source_repository": "https://github.com/flytohub/flyto-cloud",
-  "tree_sha256": "2029a40403a24a0dd629dfdd51e0775e190e7528299f28a8745beb857ad10cf9"
+  "tree_sha256": "cd65aa9cb1d4cf34f04266f5da0822ff5c2400fef6659a32faa4986f097a80ea"
 }

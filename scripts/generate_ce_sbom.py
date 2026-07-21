@@ -44,42 +44,49 @@ def _npm_components(root: Path) -> list[dict]:
     return components
 
 
-def _python_components(root: Path, *, installed_closure: bool) -> list[dict]:
+def _installed_python_components(root: Path) -> list[dict]:
     components = []
-    if installed_closure:
-        for _, name, version, license_name in _python_dependencies(root, _load_overrides(root)):
-            normalized = canonicalize_name(name)
-            purl = f"pkg:pypi/{quote(normalized, safe='')}@{quote(version, safe='')}"
-            components.append(
-                {
-                    "type": "library",
-                    "bom-ref": purl,
-                    "name": name,
-                    "version": version,
-                    "purl": purl,
-                    "licenses": [{"expression": license_name}],
-                }
-            )
-        return components
-
-    lock_path = root / "src/ui/web/backend/requirements-ce.lock"
-    for requirement in _locked_requirements(lock_path):
-        name = canonicalize_name(requirement.name)
-        version = str(requirement.specifier).removeprefix("==") or "unresolved"
-        purl = f"pkg:pypi/{quote(name, safe='')}@{quote(version, safe='') }"
+    for _, name, version, license_name in _python_dependencies(root, _load_overrides(root)):
+        normalized = canonicalize_name(name)
+        purl = f"pkg:pypi/{quote(normalized, safe='')}@{quote(version, safe='')}"
         components.append(
             {
                 "type": "library",
                 "bom-ref": purl,
-                "name": requirement.name,
+                "name": name,
                 "version": version,
                 "purl": purl,
-                "properties": [
-                    {"name": "flyto:declared_constraint", "value": str(requirement.specifier) or "*"}
-                ],
+                "licenses": [{"expression": license_name}],
             }
         )
     return components
+
+
+def _locked_python_component(requirement) -> dict:
+    name = canonicalize_name(requirement.name)
+    version = str(requirement.specifier).removeprefix("==") or "unresolved"
+    purl = f"pkg:pypi/{quote(name, safe='')}@{quote(version, safe='')}"
+    constraint = {"name": "flyto:declared_constraint", "value": str(requirement.specifier) or "*"}
+    component = {
+        "type": "library",
+        "bom-ref": purl,
+        "name": requirement.name,
+        "version": version,
+        "purl": purl,
+    }
+    component["properties"] = [constraint]
+    return component
+
+
+def _locked_python_components(root: Path) -> list[dict]:
+    lock_path = root / "src/ui/web/backend/requirements-ce.lock"
+    return [_locked_python_component(item) for item in _locked_requirements(lock_path)]
+
+
+def _python_components(root: Path, *, installed_closure: bool) -> list[dict]:
+    if installed_closure:
+        return _installed_python_components(root)
+    return _locked_python_components(root)
 
 
 def main() -> int:
@@ -101,7 +108,9 @@ def main() -> int:
     components.sort(key=lambda item: item["bom-ref"])
     serial_seed = f"{release['source_commit']}:{release['tree_sha256']}".encode("utf-8")
     serial_hex = hashlib.sha256(serial_seed).hexdigest()[:32]
-    serial = f"urn:uuid:{serial_hex[:8]}-{serial_hex[8:12]}-4{serial_hex[13:16]}-a{serial_hex[17:20]}-{serial_hex[20:32]}"
+    serial = (
+        f"urn:uuid:{serial_hex[:8]}-{serial_hex[8:12]}-4{serial_hex[13:16]}-a{serial_hex[17:20]}-{serial_hex[20:32]}"
+    )
     sbom = {
         "bomFormat": "CycloneDX",
         "specVersion": "1.5",

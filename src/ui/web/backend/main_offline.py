@@ -11,6 +11,7 @@ Usage:
     python main_offline.py
     uvicorn main_offline:app --host 127.0.0.1 --port 9000
 """
+
 import sys
 import os
 from pathlib import Path
@@ -19,15 +20,16 @@ from pathlib import Path
 os.environ["DEPLOYMENT_MODE"] = "offline"
 
 # === SSL certificates for packaged mode ===
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     try:
         import certifi
+
         os.environ.setdefault("SSL_CERT_FILE", certifi.where())
     except ImportError:
         pass
 
 # === Path Setup ===
-if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+if getattr(sys, "frozen", False) and hasattr(sys, "_MEIPASS"):
     _backend_dir = Path(sys._MEIPASS)
     os.chdir(Path.home() / ".flyto")
 else:
@@ -37,13 +39,13 @@ else:
 if str(_backend_dir) not in sys.path:
     sys.path.insert(0, str(_backend_dir))
 
-if not getattr(sys, 'frozen', False):
+if not getattr(sys, "frozen", False):
     _project_root = _backend_dir.parent.parent.parent.parent
     if str(_project_root) not in sys.path:
         sys.path.insert(0, str(_project_root))
 
 # === Hot-updated packages bootstrap (packaged mode only) ===
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     _pip_packages = Path.home() / ".flyto" / "pip_packages"
     if _pip_packages.exists() and str(_pip_packages) not in sys.path:
         sys.path.insert(0, str(_pip_packages))
@@ -80,7 +82,9 @@ from local.browser_bootstrap import (
 from local.websocket_routes import register_websocket_routes
 from local.static_files import mount_static_files
 from local.lifespan_local import (
-    init_capabilities, init_breakpoint_manager, cleanup_stale_browser_locks,
+    init_capabilities,
+    init_breakpoint_manager,
+    cleanup_stale_browser_locks,
 )
 
 logger = logging.getLogger(__name__)
@@ -91,9 +95,7 @@ try:
     _log_dir.mkdir(parents=True, exist_ok=True)
     _file_handler = logging.FileHandler(_log_dir / "offline.log", encoding="utf-8")
     _file_handler.setLevel(logging.INFO)
-    _file_handler.setFormatter(logging.Formatter(
-        "%(asctime)s %(name)s %(levelname)s %(message)s"
-    ))
+    _file_handler.setFormatter(logging.Formatter("%(asctime)s %(name)s %(levelname)s %(message)s"))
     logging.getLogger().addHandler(_file_handler)
 except Exception:
     pass
@@ -102,107 +104,116 @@ settings = get_settings()
 paths = get_path_resolver()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    """Startup and shutdown for Offline Runner."""
+def _scan_modules() -> None:
+    from services.infra.module_scanner import ModuleScanner
+
+    result = ModuleScanner().scan_modules()
+    if result["status"] == "success":
+        logger.info(f"Loaded {result['count']} modules from {len(result['categories'])} categories")
+    else:
+        logger.warning(f"Module scan failed: {result['message']}")
+
+
+async def _bootstrap_browser() -> None:
+    try:
+        await asyncio.gather(
+            ensure_node_binary(),
+            ensure_playwright_chromium(),
+            return_exceptions=True,
+        )
+    except Exception as exc:
+        logger.warning(f"Background browser setup skipped: {exc}")
+
+
+async def _start_alerts() -> None:
+    try:
+        from services.observability.alerts.scheduler import start_alert_scheduler
+
+        await start_alert_scheduler()
+    except (ImportError, Exception):
+        pass
+
+
+def _init_tracing() -> None:
+    try:
+        from services.observability.tracing import get_tracer, SqliteTraceExporter
+
+        get_tracer(exporter=SqliteTraceExporter())
+    except (ImportError, Exception):
+        pass
+
+
+async def _run_deferred() -> None:
+    _scan_modules()
+    await _bootstrap_browser()
+    await _start_alerts()
+    _init_tracing()
+    logger.info("=" * 60)
+    logger.info("Offline Runner fully initialized")
+    logger.info("=" * 60)
+
+
+async def _startup() -> asyncio.Task:
     configure_playwright_browsers_path()
     from services.observability.log_manager import get_log_manager
+
     get_log_manager().install_handler()
-
     await init_capabilities()
-
     logger.info("=" * 60)
     logger.info(f"Flyto2 Offline Runner v{APP_VERSION}")
     logger.info("Mode: offline (no cloud dependency)")
     logger.info("=" * 60)
 
-    # Initialize offline SQLite database
     from gateway.storage.offline_db import init_offline_db
+
     init_offline_db()
     from gateway.providers.auth.offline import validate_offline_auth_configuration
+
     validate_offline_auth_configuration()
     logger.info("Offline database initialized")
-
     cleanup_stale_browser_locks()
-
-    # Mark startup complete
     from api.health import mark_startup_complete
+
     mark_startup_complete()
     init_breakpoint_manager()
-
     logger.info("Server ready, loading modules in background...")
-
-    # Deferred heavy init (modules, browser)
-    async def _run_deferred():
-        # Scan modules
-        from services.infra.module_scanner import ModuleScanner
-        scanner = ModuleScanner()
-        result = scanner.scan_modules()
-        if result['status'] == 'success':
-            logger.info(f"Loaded {result['count']} modules from {len(result['categories'])} categories")
-        else:
-            logger.warning(f"Module scan failed: {result['message']}")
-
-        # Browser bootstrap (Playwright + Node)
-        try:
-            await asyncio.gather(
-                ensure_node_binary(),
-                ensure_playwright_chromium(),
-                return_exceptions=True,
-            )
-        except Exception as e:
-            logger.warning(f"Background browser setup skipped: {e}")
-
-        # Alert scheduler (SQLite-backed)
-        try:
-            from services.observability.alerts.scheduler import start_alert_scheduler
-            await start_alert_scheduler()
-        except (ImportError, Exception):
-            pass
-
-        # Tracing (SQLite-backed)
-        try:
-            from services.observability.tracing import get_tracer, SqliteTraceExporter
-            exporter = SqliteTraceExporter()
-            get_tracer(exporter=exporter)
-        except (ImportError, Exception):
-            pass
-
-        logger.info("=" * 60)
-        logger.info("Offline Runner fully initialized")
-        logger.info("=" * 60)
-
     task = asyncio.create_task(_run_deferred())
     task.add_done_callback(
-        lambda t: logger.error(f"Deferred init failed: {t.exception()}") if t.exception() else None
+        lambda completed: (
+            logger.error(f"Deferred init failed: {completed.exception()}") if completed.exception() else None
+        )
     )
+    return task
 
-    yield
 
-    # --- Shutdown ---
-
-    # Stop alert scheduler
+async def _shutdown() -> None:
     try:
         from services.observability.alerts.scheduler import stop_alert_scheduler
+
         await stop_alert_scheduler()
     except (ImportError, Exception):
         pass
-
-    # Close offline database
     try:
         from gateway.storage.offline_db import close_offline_db
+
         close_offline_db()
     except Exception:
         pass
-
-    # Close execution database
     try:
         from gateway.storage.database import close_db
+
         close_db()
     except Exception:
         pass
-
     logger.info("Offline Runner shut down")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup and shutdown for Offline Runner."""
+    await _startup()
+    yield
+    await _shutdown()
 
 
 app = FastAPI(
@@ -226,6 +237,7 @@ setup_cors(
 
 # Production security hardening
 from middleware.security_hardening import ErrorSanitizationMiddleware, RequestSizeLimitMiddleware
+
 app.add_middleware(ErrorSanitizationMiddleware)
 app.add_middleware(RequestSizeLimitMiddleware, max_body_size=50 * 1024 * 1024)  # 50MB
 
@@ -237,6 +249,7 @@ setup_common_middleware(
 
 
 # --- Health Check ---
+
 
 @app.get("/api/health")
 async def health_check():
@@ -260,6 +273,7 @@ register_websocket_routes(app, sidecar_secret="")
 
 # --- Catch-all: No proxy — return 404 for unmatched /api/* routes ---
 
+
 @app.api_route(
     "/api/{path:path}",
     methods=["GET", "POST", "PUT", "DELETE", "PATCH"],
@@ -267,6 +281,7 @@ register_websocket_routes(app, sidecar_secret="")
 )
 async def _no_proxy(path: str):
     from fastapi.responses import JSONResponse
+
     return JSONResponse(
         status_code=404,
         content={"ok": False, "error": f"Route /api/{path} not available in offline mode"},
@@ -291,7 +306,7 @@ if __name__ == "__main__":
 
     _host = args.host or settings.api_host
     _port = args.port or settings.api_port
-    _is_dev = not getattr(sys, 'frozen', False)
+    _is_dev = not getattr(sys, "frozen", False)
 
     if _is_dev and not args.no_reload:
         uvicorn.run(

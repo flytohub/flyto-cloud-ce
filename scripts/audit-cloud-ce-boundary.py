@@ -188,43 +188,104 @@ def _local_module_exists(backend: Path, module: str) -> bool:
     return path.with_suffix(".py").is_file() or path.is_dir()
 
 
+def _import_from_module(node: ast.ImportFrom, package: list[str]) -> str | None:
+    if not node.level:
+        return node.module
+    keep = max(0, len(package) - (node.level - 1))
+    parts = package[:keep]
+    if node.module:
+        parts.extend(node.module.split("."))
+    return ".".join(parts) if parts else None
+
+
+def _imported_modules(node: ast.AST, package: list[str]) -> list[str]:
+    if isinstance(node, ast.Import):
+        return [alias.name for alias in node.names]
+    if isinstance(node, ast.ImportFrom):
+        module = _import_from_module(node, package)
+        return [module] if module else []
+    return []
+
+
+def _audit_python_file(
+    root: Path,
+    backend: Path,
+    path: Path,
+    local_roots: set[str],
+    blockers: list[str],
+) -> None:
+    rel = path.relative_to(root).as_posix()
+    try:
+        tree = ast.parse(_read_text(path), filename=rel)
+    except SyntaxError as exc:
+        blockers.append(f"{rel}: invalid Python syntax: {exc.msg}")
+        return
+
+    package = list(path.relative_to(backend).parent.parts)
+    for node in ast.walk(tree):
+        for module in _imported_modules(node, package):
+            if module.split(".", 1)[0] in local_roots and not _local_module_exists(backend, module):
+                blockers.append(f"{rel}: unresolved local import {module}")
+
+
 def _audit_local_python_imports(root: Path, blockers: list[str]) -> None:
     """Reject imports that still point at removed private backend modules."""
     backend = root / "src/ui/web/backend"
     if not backend.is_dir():
         return
-    local_roots = {
-        path.name
-        for path in backend.iterdir()
-        if path.is_dir() and not path.name.startswith(".")
-    }
+    local_roots = {path.name for path in backend.iterdir() if path.is_dir() and not path.name.startswith(".")}
     for path in backend.rglob("*.py"):
-        rel = path.relative_to(root).as_posix()
-        try:
-            tree = ast.parse(_read_text(path), filename=rel)
-        except SyntaxError as exc:
-            blockers.append(f"{rel}: invalid Python syntax: {exc.msg}")
-            continue
-        package = list(path.relative_to(backend).parent.parts)
-        for node in ast.walk(tree):
-            modules: list[str] = []
-            if isinstance(node, ast.Import):
-                modules.extend(alias.name for alias in node.names)
-            elif isinstance(node, ast.ImportFrom):
-                if node.level:
-                    keep = max(0, len(package) - (node.level - 1))
-                    parts = package[:keep]
-                    if node.module:
-                        parts.extend(node.module.split("."))
-                    if parts:
-                        modules.append(".".join(parts))
-                elif node.module:
-                    modules.append(node.module)
-            for module in modules:
-                if module.split(".", 1)[0] not in local_roots:
-                    continue
-                if not _local_module_exists(backend, module):
-                    blockers.append(f"{rel}: unresolved local import {module}")
+        _audit_python_file(root, backend, path, local_roots, blockers)
+
+
+def _audit_release_path(root: Path, path: Path, blockers: list[str]) -> None:
+    rel_path = path.relative_to(root)
+    rel = rel_path.as_posix()
+    if path.is_symlink():
+        blockers.append(f"CE release contains symlink: {rel}")
+    if ".git" in rel_path.parts:
+        blockers.append(f"CE release contains Git metadata: {rel}")
+    if path.name == "__pycache__" or path.suffix == ".pyc":
+        blockers.append(f"CE release contains generated Python bytecode: {rel}")
+
+
+def _audit_denied_paths(
+    root: Path,
+    paths: list[Path],
+    manifest: dict,
+    blockers: list[str],
+) -> None:
+    replacements = set(manifest.get("ce_replacement_paths", []))
+    release_paths = [path.relative_to(root).as_posix() for path in paths]
+    for pattern in manifest.get("ce_deny_path_patterns", []):
+        match = next(
+            (rel for rel in release_paths if rel not in replacements and _matches(rel, [pattern])),
+            None,
+        )
+        if match:
+            blockers.append(f"private path escaped into CE tree: {pattern} ({match})")
+
+
+def _audit_release_text_file(
+    root: Path,
+    path: Path,
+    denied_markers: list[str],
+    blockers: list[str],
+) -> None:
+    if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
+        return
+    rel = path.relative_to(root).as_posix()
+    if rel in {MANIFEST_NAME, EXPORT_MANIFEST_NAME}:
+        return
+    body = _read_text(path)
+    if SECRET_ASSIGNMENT.search(body):
+        blockers.append(f"{rel}: CE release contains an assigned hosted secret")
+    if not rel.startswith(("src/", "install/")):
+        return
+    lowered = body.lower()
+    for marker in denied_markers:
+        if marker and marker.lower() in lowered:
+            blockers.append(f"{rel}: denied CE implementation marker {marker!r}")
 
 
 def _audit_release_tree(root: Path, manifest: dict, blockers: list[str]) -> None:
@@ -232,41 +293,13 @@ def _audit_release_tree(root: Path, manifest: dict, blockers: list[str]) -> None
         if not (root / rel).is_file():
             blockers.append(f"missing required CE release file: {rel}")
 
-    for path in _release_paths(root):
-        rel = path.relative_to(root).as_posix()
-        if path.is_symlink():
-            blockers.append(f"CE release contains symlink: {rel}")
-        if ".git" in path.relative_to(root).parts:
-            blockers.append(f"CE release contains Git metadata: {rel}")
-        if path.name == "__pycache__" or path.suffix == ".pyc":
-            blockers.append(f"CE release contains generated Python bytecode: {rel}")
-
-    replacements = set(manifest.get("ce_replacement_paths", []))
-    for pattern in manifest.get("ce_deny_path_patterns", []):
-        matches = [
-            path.relative_to(root).as_posix()
-            for path in _release_paths(root)
-            if _matches(path.relative_to(root).as_posix(), [pattern])
-            and path.relative_to(root).as_posix() not in replacements
-        ]
-        if matches:
-            blockers.append(f"private path escaped into CE tree: {pattern} ({matches[0]})")
-
+    paths = list(_release_paths(root))
+    for path in paths:
+        _audit_release_path(root, path, blockers)
+    _audit_denied_paths(root, paths, manifest, blockers)
     denied_markers = [str(item) for item in manifest.get("ce_deny_content_markers", [])]
-    for path in _release_paths(root):
-        if not path.is_file() or path.suffix.lower() not in TEXT_SUFFIXES:
-            continue
-        rel = path.relative_to(root).as_posix()
-        if rel in {MANIFEST_NAME, EXPORT_MANIFEST_NAME}:
-            continue
-        body = _read_text(path)
-        if SECRET_ASSIGNMENT.search(body):
-            blockers.append(f"{rel}: CE release contains an assigned hosted secret")
-        if rel.startswith(("src/", "install/")):
-            lowered = body.lower()
-            for marker in denied_markers:
-                if marker and marker.lower() in lowered:
-                    blockers.append(f"{rel}: denied CE implementation marker {marker!r}")
+    for path in paths:
+        _audit_release_text_file(root, path, denied_markers, blockers)
 
     license_body = _read_text(root / "LICENSE")
     if "Apache License" not in license_body or "Version 2.0, January 2004" not in license_body:
