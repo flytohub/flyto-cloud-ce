@@ -33,7 +33,7 @@ cryptography>=46.0.6
 
 # Utilities
 python-dotenv>=1.0.0
-PyYAML>=6.0.1
+PyYAML>=6.0.3
 tenacity>=8.2.0
 
 # Image processing (Module Appearance icons + QR code generation)
