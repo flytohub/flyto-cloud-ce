@@ -12,7 +12,7 @@ aiohttp>=3.14.0
 httpx>=0.26.0
 
 # Firebase Admin SDK
-firebase-admin>=6.4.0
+firebase-admin>=7.5.0
 
 # Google APIs (GA4 + Search Console for SEO Analytics)
 google-api-python-client>=2.100.0
