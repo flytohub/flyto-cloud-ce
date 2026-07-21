@@ -30,7 +30,7 @@
     "circle-flags": "^2.8.2",
     "dompurify": "^3.4.10",
     "highlight.js": "^11.11.1",
-    "js-yaml": "^4.2.0",
+    "js-yaml": "^5.2.1",
     "lucide-vue-next": "^0.555.0",
     "marked": "^17.0.1",
     "monaco-editor": "^0.53.0",
