@@ -1,6 +1,5 @@
 # Flyto2 Flow
 
-> **自己的流程，自己的 MCP。**
 > Build workflows visually. Publish them as MCP tools.
 
 Flyto2 Flow is an open-source, self-hosted visual workflow and MCP builder powered by `flyto-core`. Combine browser automation, APIs, files, data processing, and control-flow atoms in the UI, test the workflow locally, then expose it as an MCP tool.
