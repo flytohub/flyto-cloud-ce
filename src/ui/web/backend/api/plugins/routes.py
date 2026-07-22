@@ -10,6 +10,7 @@ import json
 import shutil
 import logging
 import aiohttp
+import re
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 from fastapi import APIRouter, Query, HTTPException
@@ -27,6 +28,10 @@ router = APIRouter(prefix="/plugins", tags=["Plugins"])
 PLUGINS_DIR = Path.home() / ".flyto" / "plugins"
 HF_API_URL = "https://huggingface.co/api"
 REQUEST_TIMEOUT = 30
+_MODEL_ID_RE = re.compile(
+    r"^[A-Za-z0-9][A-Za-z0-9._-]{0,95}"
+    r"(?:/[A-Za-z0-9][A-Za-z0-9._-]{0,95})?$"
+)
 
 # Ensure plugins directory exists
 PLUGINS_DIR.mkdir(parents=True, exist_ok=True)
@@ -120,6 +125,28 @@ async def hf_request(endpoint: str, params: dict = None) -> Dict[str, Any]:
         return {"ok": False, "error": str(e)}
 
 
+async def hf_model_info(model_id: str) -> Dict[str, Any]:
+    """Resolve model details through the fixed HuggingFace collection URL."""
+    result = await hf_request("/models", {"search": model_id, "limit": 100})
+    if not result["ok"]:
+        return result
+
+    models = result.get("data", [])
+    if not isinstance(models, list):
+        models = [models] if models else []
+    for model in models:
+        if model.get("id") == model_id or model.get("modelId") == model_id:
+            return {"ok": True, "data": model}
+    return {"ok": False, "error": "Model not found"}
+
+
+def validate_model_id(model_id: str) -> str:
+    """Validate model IDs before filesystem and provider operations."""
+    if not _MODEL_ID_RE.fullmatch(model_id):
+        raise HTTPException(status_code=400, detail="Invalid model ID")
+    return model_id
+
+
 def scan_installed_plugins() -> List[Dict[str, Any]]:
     """Scan local plugins folder"""
     plugins = []
@@ -198,7 +225,8 @@ async def get_model_info(model_id: str) -> Dict[str, Any]:
     """
 
 
-    result = await hf_request(f"/models/{model_id}")
+    model_id = validate_model_id(model_id)
+    result = await hf_model_info(model_id)
 
     if not result["ok"]:
         status = 404 if "not found" in result.get("error", "").lower() else 502
@@ -235,6 +263,7 @@ async def install_model(model_id: str) -> Dict[str, Any]:
     """
 
 
+    model_id = validate_model_id(model_id)
     provider = get_installed_model_provider()
 
     # Check if already installed in new system
@@ -245,7 +274,7 @@ async def install_model(model_id: str) -> Dict[str, Any]:
         }
 
     # Fetch model info from HuggingFace
-    result = await hf_request(f"/models/{model_id}")
+    result = await hf_model_info(model_id)
     if not result["ok"]:
         raise HTTPException(404, f"Model {model_id} not found on HuggingFace")
 
@@ -289,7 +318,7 @@ async def install_model(model_id: str) -> Dict[str, Any]:
 
     (plugin_dir / "plugin.json").write_text(json.dumps(meta, indent=2))
 
-    logger.info(f"Installed HuggingFace model: {model_id} (task: {task})")
+    logger.info("HuggingFace model installed")
 
     return {
         "ok": True,
@@ -311,6 +340,7 @@ async def uninstall_model(model_id: str) -> Dict[str, Any]:
     1. Removes from installed_models.json via InstalledModelProvider
     2. Removes legacy plugin directory if exists
     """
+    model_id = validate_model_id(model_id)
     provider = get_installed_model_provider()
     plugin_dir = PLUGINS_DIR / model_id_to_dir_name(model_id)
 
@@ -330,16 +360,17 @@ async def uninstall_model(model_id: str) -> Dict[str, Any]:
         if is_in_legacy:
             shutil.rmtree(plugin_dir)
 
-        logger.info(f"Uninstalled HuggingFace model: {model_id}")
+        logger.info("HuggingFace model uninstalled")
         return {"ok": True, "data": {"model_id": model_id, "status": "uninstalled"}}
-    except Exception as e:
-        logger.error(f"Failed to uninstall {model_id}: {e}")
-        raise HTTPException(500, str(e))
+    except Exception:
+        logger.error("Failed to uninstall HuggingFace model", exc_info=True)
+        raise HTTPException(500, "Failed to uninstall model")
 
 
 @router.get("/status/{model_id:path}")
 async def get_status(model_id: str) -> Dict[str, Any]:
     """Get model installation and download status"""
+    model_id = validate_model_id(model_id)
     provider = get_installed_model_provider()
     model = provider.get(model_id)
 

@@ -144,10 +144,10 @@ async def request_collaboration(
                 template_name, template_id, request_id,
                 body.message,
             )
-        except Exception as e:
-            logger.warning(f"Failed to send collab request notification: {e}")
+        except Exception:
+            logger.warning("Failed to send collaboration request notification", exc_info=True)
 
-        logger.info(f"User {user_id} requested collaboration for template {template_id}")
+        logger.info("Collaboration request created")
         return CollabRequestResponse(
             id=request_id,
             template_id=template_id,
@@ -295,10 +295,10 @@ async def resolve_collaboration_request(
                 template_name, template_id, request_id,
                 approved,
             )
-        except Exception as e:
-            logger.warning(f"Failed to send collab resolve notification: {e}")
+        except Exception:
+            logger.warning("Failed to send collaboration resolution notification", exc_info=True)
 
-        logger.info(f"Owner {user_id} {status_str} collab request {request_id} for template {template_id}")
+        logger.info("Collaboration request resolved")
         return {"ok": True, "status": status_str}
 
     except HTTPException:

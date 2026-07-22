@@ -152,7 +152,7 @@ async def delete_my_profile(
         except Exception as e:
             logger.warning(f"Failed to create audit log: {e}")
 
-        logger.info(f"Deletion request created for user {user_id}")
+        logger.info("Account deletion request created")
 
         return {
             "ok": True,

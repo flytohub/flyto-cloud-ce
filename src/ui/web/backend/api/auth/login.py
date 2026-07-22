@@ -17,7 +17,6 @@ from .deps import (
     build_user_response,
     get_current_user,
     login_rate_limiter,
-    mask_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -45,7 +44,7 @@ async def login(data: LoginRequest, request: Request):
     # Check rate limit
     if login_rate_limiter.is_locked(rate_key):
         remaining = login_rate_limiter.get_lockout_remaining(rate_key)
-        logger.warning(f"Rate limited login attempt for {mask_email(data.email)} from {client_ip}")
+        logger.warning("Rate limited login attempt")
         raise HTTPException(
             status_code=429,
             detail=f"Too many login attempts. Please try again in {remaining // 60} minutes.",
@@ -63,9 +62,7 @@ async def login(data: LoginRequest, request: Request):
 
     try:
         auth_provider = get_auth_provider()
-        # SECURITY: Mask email in logs for privacy
-        masked = mask_email(data.email)
-        logger.info(f"Login attempt via {auth_provider.provider_name} for: {masked}")
+        logger.info("Login attempt received")
 
         result = await auth_provider.authenticate({
             "email": data.email,
@@ -73,12 +70,12 @@ async def login(data: LoginRequest, request: Request):
         })
 
         if not result.ok:
-            logger.warning(f"Login failed for {masked}: {result.error}")
+            logger.warning("Login failed")
             raise HTTPException(status_code=401, detail=result.error)
 
         # SECURITY: Reset rate limit on successful login
         login_rate_limiter.reset(rate_key)
-        logger.info(f"Login successful for: {masked}")
+        logger.info("Login successful")
 
         # Build response
         user_dict = result.user.model_dump() if result.user else None
@@ -96,9 +93,9 @@ async def login(data: LoginRequest, request: Request):
 
     except HTTPException:
         raise
-    except Exception as e:
+    except Exception:
         # SECURITY: Don't leak internal error details to client
-        logger.error(f"Login error for {mask_email(data.email)}: {e}", exc_info=True)
+        logger.error("Login error", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 

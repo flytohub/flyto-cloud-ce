@@ -12,4 +12,4 @@ Modified distributions must use a distinct product name and must not use the
 Flyto2 logo as their primary branding. Statements such as "based on Flyto2
 Cloud CE" or "compatible with Flyto2 Cloud CE" are permitted when accurate.
 
-Contact legal@flyto2.com for permission outside these guidelines.
+Contact info@flyto2.com for permission outside these guidelines.

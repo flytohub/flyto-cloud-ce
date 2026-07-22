@@ -87,7 +87,7 @@ async def get_execution_status(
         if not user_id:
             raise HTTPException(status_code=401, detail="Authentication required")
         if exec_user_id is None:
-            logger.warning(f"Orphaned execution {execution_id} accessed by user {user_id}")
+            logger.warning("Orphaned execution access denied")
             raise HTTPException(status_code=403, detail="Execution has no owner - access denied")
         if user_id != exec_user_id:
             raise HTTPException(status_code=403, detail="Access denied")
@@ -139,7 +139,7 @@ async def cancel_execution(
                 detail="Authentication required"
             )
         if exec_user_id is None:
-            logger.warning(f"Attempt to cancel orphaned execution {execution_id} by user {user_id}")
+            logger.warning("Attempt to cancel orphaned execution denied")
             raise HTTPException(
                 status_code=403,
                 detail="Execution has no owner - cannot cancel"
@@ -277,9 +277,5 @@ async def _settle_per_call_if_terminal(execution_id: str, status: dict) -> None:
         )
         if settlement.get("settled"):
             status["per_call_settlement"] = settlement
-    except Exception as exc:
-        logger.warning(
-            "Failed to settle per-call execution %s: %s",
-            execution_id,
-            exc,
-        )
+    except Exception:
+        logger.warning("Failed to settle per-call execution", exc_info=True)

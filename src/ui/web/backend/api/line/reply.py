@@ -5,6 +5,7 @@ Endpoints for desktop app to send messages back to LINE users.
 """
 import os
 import logging
+import re
 from typing import Any, Dict, Optional
 
 import httpx
@@ -30,6 +31,7 @@ LINE_PROFILE_URL = "https://api.line.me/v2/bot/profile"
 # has no timeout, so a hung LINE endpoint would hang the user-facing request
 # indefinitely. 10s overall, 5s to establish the connection.
 LINE_HTTP_TIMEOUT = httpx.Timeout(10.0, connect=5.0)
+_LINE_USER_ID_RE = re.compile(r"^U[0-9a-fA-F]{32}$")
 
 
 def get_line_headers() -> Dict[str, str]:
@@ -192,6 +194,8 @@ async def get_line_profile(user_id: str):
 
     Returns display name and profile picture URL.
     """
+    if not _LINE_USER_ID_RE.fullmatch(user_id):
+        raise HTTPException(status_code=400, detail="Invalid LINE user ID")
     headers = get_line_headers()
 
     try:

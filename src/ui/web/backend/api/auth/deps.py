@@ -95,7 +95,7 @@ class RateLimiter:
 
         if len(self._attempts[key]) > self.max_attempts:
             self._lockouts[key] = time.time() + self.lockout_seconds
-            logger.warning(f"Rate limit exceeded for key: {key[:20]}...")
+            logger.warning("Authentication rate limit exceeded")
             return False
 
         return True

@@ -280,7 +280,7 @@ async def trigger_webhook(
     # Check IP allowlist
     if webhook.allowed_ips and client_ip:
         if client_ip not in webhook.allowed_ips:
-            logger.warning(f"Webhook {webhook_id} blocked IP: {client_ip}")
+            logger.warning("Webhook request blocked by IP allowlist")
             unauthorized("IP not allowed")
 
     # Verify signature if required

@@ -717,6 +717,6 @@ async def upload_breakpoint_screenshot(
         bp_request.context_snapshot.pop("screenshot_base64", None)
         await manager.store.save(bp_request)
 
-    logger.debug("Screenshot saved for %s: %s (%d bytes)", breakpoint_id, filepath, len(body))
+    logger.debug("Screenshot saved")
 
     return {"ok": True, "url": url, "size": len(body)}

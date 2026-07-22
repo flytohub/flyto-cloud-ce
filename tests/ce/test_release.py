@@ -91,7 +91,7 @@ async def test_local_jwt_auth_round_trip_and_registration_lock(isolated_offline_
         registration = await client.post(
             "/api/auth/register",
             json={
-                "email": "owner@example.com",
+                "email": "admin@flyto2.com",
                 "password": "StrongPassword123",
                 "username": "Owner",
             },
@@ -103,7 +103,7 @@ async def test_local_jwt_auth_round_trip_and_registration_lock(isolated_offline_
         second_registration = await client.post(
             "/api/auth/register",
             json={
-                "email": "public@example.com",
+                "email": "dev@flyto2.com",
                 "password": "StrongPassword456",
             },
         )
@@ -111,7 +111,7 @@ async def test_local_jwt_auth_round_trip_and_registration_lock(isolated_offline_
 
         login = await client.post(
             "/api/auth/login",
-            json={"email": "owner@example.com", "password": "StrongPassword123"},
+            json={"email": "admin@flyto2.com", "password": "StrongPassword123"},
         )
         assert login.status_code == 200, login.text
         tokens = login.json()
@@ -121,7 +121,7 @@ async def test_local_jwt_auth_round_trip_and_registration_lock(isolated_offline_
             headers={"Authorization": f"Bearer {tokens['access_token']}"},
         )
         assert me.status_code == 200
-        assert me.json()["user"]["email"] == "owner@example.com"
+        assert me.json()["user"]["email"] == "admin@flyto2.com"
 
         refresh = await client.post(
             "/api/auth/refresh",
@@ -161,7 +161,7 @@ async def test_authenticated_template_crud_uses_local_storage(isolated_offline_s
     ) as client:
         registration = await client.post(
             "/api/auth/register",
-            json={"email": "owner@example.com", "password": "StrongPassword123"},
+            json={"email": "admin@flyto2.com", "password": "StrongPassword123"},
         )
         assert registration.status_code == 200, registration.text
         headers = {

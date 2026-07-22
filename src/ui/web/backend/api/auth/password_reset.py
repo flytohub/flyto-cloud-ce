@@ -13,7 +13,6 @@ from .deps import (
     VerifyResetCodeRequest,
     ResetPasswordRequest,
     password_reset_rate_limiter,
-    mask_email,
 )
 
 logger = logging.getLogger(__name__)
@@ -52,7 +51,7 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
         else:
             raise HTTPException(status_code=501, detail="Password reset not supported")
 
-        logger.info(f"Password reset sent for: {mask_email(data.email)}")
+        logger.info("Password reset request accepted")
         return {
             "ok": True,
             "message": "If an account exists with this email, a password reset link has been sent.",
@@ -64,15 +63,15 @@ async def forgot_password(data: ForgotPasswordRequest, request: Request):
         error_msg = str(e)
         if "EMAIL_NOT_FOUND" in error_msg:
             # SECURITY: Return same success response to prevent email enumeration
-            logger.info(f"Password reset for non-existent email: {mask_email(data.email)}")
+            logger.info("Password reset request handled without account disclosure")
             return {
                 "ok": True,
                 "message": "If an account exists with this email, a password reset link has been sent.",
             }
-        logger.error(f"Password reset error for {mask_email(data.email)}: {e}")
+        logger.error("Password reset provider rejected the request", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to send reset email")
-    except Exception as e:
-        logger.error(f"Password reset error for {mask_email(data.email)}: {e}")
+    except Exception:
+        logger.error("Password reset failed", exc_info=True)
         raise HTTPException(status_code=500, detail="Internal server error")
 
 
@@ -92,12 +91,11 @@ async def verify_reset_code(data: VerifyResetCodeRequest):
 
         return {"ok": True, "valid": True}
 
-    except ValueError as e:
-        error_msg = str(e)
-        logger.warning(f"Reset code verification failed: {error_msg}")
+    except ValueError:
+        logger.warning("Reset code verification failed")
         return {"ok": False, "valid": False, "error": "Invalid or expired reset link"}
-    except Exception as e:
-        logger.error(f"Reset code verification error: {e}")
+    except Exception:
+        logger.error("Reset code verification failed", exc_info=True)
         return {"ok": False, "valid": False, "error": "Invalid or expired reset link"}
 
 
@@ -136,8 +134,8 @@ async def reset_password(data: ResetPasswordRequest):
             raise HTTPException(status_code=400, detail="Reset link has expired. Please request a new one.")
         if "WEAK_PASSWORD" in error_msg:
             raise HTTPException(status_code=400, detail="Password is too weak")
-        logger.error(f"Password reset error: {e}")
+        logger.error("Password reset provider rejected the reset", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to reset password")
-    except Exception as e:
-        logger.error(f"Password reset error: {e}")
+    except Exception:
+        logger.error("Password reset failed", exc_info=True)
         raise HTTPException(status_code=400, detail="Failed to reset password")

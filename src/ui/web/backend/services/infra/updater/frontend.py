@@ -261,16 +261,36 @@ class FrontendUpdater:
         try:
             with tarfile.open(tarball_path, 'r:gz') as tf:
                 for member in tf.getmembers():
-                    # Security: reject unsafe paths
-                    if member.name.startswith('/') or '..' in member.name:
+                    member_path = Path(member.name)
+                    # Do not materialize links: they can escape staging after
+                    # the initial path check and redirect later file writes.
+                    if member.issym() or member.islnk():
+                        logger.error("Unsupported link in frontend tarball")
+                        return False
+                    if not member.name or member_path.is_absolute() or ".." in member_path.parts:
                         logger.error("Unsafe path in tarball: %s", member.name)
                         return False
-                    # Reject absolute or upward-traversal resolved paths
-                    resolved = (staging_dir / member.name).resolve()
-                    if not str(resolved).startswith(str(staging_dir.resolve())):
-                        logger.error("Path traversal detected: %s", member.name)
+                    staging_root = staging_dir.resolve()
+                    resolved = (staging_root / member_path).resolve()
+                    try:
+                        resolved.relative_to(staging_root)
+                    except ValueError:
+                        logger.error("Path traversal detected in frontend tarball")
                         return False
-                tf.extractall(staging_dir)
+
+                    if member.isdir():
+                        resolved.mkdir(parents=True, exist_ok=True)
+                        continue
+                    if not member.isfile():
+                        logger.error("Unsupported entry in frontend tarball")
+                        return False
+                    resolved.parent.mkdir(parents=True, exist_ok=True)
+                    source = tf.extractfile(member)
+                    if source is None:
+                        logger.error("Unreadable file in frontend tarball")
+                        return False
+                    with source, resolved.open("wb") as target:
+                        shutil.copyfileobj(source, target)
 
             logger.info("Extracted frontend to staging directory")
             return True

@@ -73,8 +73,8 @@ async def _get_user_profiles(provider, user_ids: list[str]) -> dict[str, dict]:
                         }
                 except NotImplementedError:
                     profile = {}
-                except Exception as e:
-                    logger.debug("Failed to fetch user profile %s: %s", uid, e)
+                except Exception:
+                    logger.debug("Failed to fetch user profile", exc_info=True)
 
             result[uid] = profile
             _profile_cache[uid] = profile

@@ -369,9 +369,12 @@ export function getShapeEffectVars(shapeName) {
  * Generate delete button style
  */
 export function getDeleteButtonStyle(size = 'default') {
-  const sizeValue = size === 'small' ? BUTTON.delete.sizeSmall :
-                    size === 'medium' ? BUTTON.delete.sizeMedium :
-                    BUTTON.delete.size
+  let sizeValue = BUTTON.delete.size
+  if (size === 'small') {
+    sizeValue = BUTTON.delete.sizeSmall
+  } else if (size === 'medium') {
+    sizeValue = BUTTON.delete.sizeMedium
+  }
   return {
     width: `${sizeValue}px`,
     height: `${sizeValue}px`,

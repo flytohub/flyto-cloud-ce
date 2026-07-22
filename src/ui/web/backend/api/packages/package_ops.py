@@ -345,7 +345,7 @@ async def _pip_install_dev(pip_name: str, package_id: str, upgrade: bool = False
             ok=False, message="Operation timed out", package_id=package_id,
         )
     except Exception as e:
-        logger.error("pip install error [%s]: %s", package_id, e)
+        logger.error("pip install failed", exc_info=True)
         return PackageActionResult(
             ok=False, message="Install error: {}".format(str(e)[:200]), package_id=package_id,
         )
@@ -528,7 +528,7 @@ async def _remove_package_impl(package_id: str) -> PackageActionResult:
         return PackageActionResult(ok=True, message="Removed successfully", package_id=package_id)
 
     except Exception as e:
-        logger.error("Package remove error [%s]: %s", package_id, e)
+        logger.error("Package removal failed", exc_info=True)
         return PackageActionResult(
             ok=False, message="Remove error: {}".format(str(e)[:200]), package_id=package_id,
         )

@@ -144,8 +144,8 @@ async def match_snapshot(
             "differences": differences,
         }
 
-    except Exception as e:
-        logger.error(f"Failed to match snapshot {snapshot_name}: {e}", exc_info=True)
+    except Exception:
+        logger.error("Failed to match snapshot", exc_info=True)
         return {
             "matched": False,
             "error": "Failed to match snapshot",
@@ -177,8 +177,8 @@ async def update_snapshot(
             "created": not snapshot_file.exists(),
         }
 
-    except Exception as e:
-        logger.error(f"Failed to save snapshot {snapshot_name}: {e}", exc_info=True)
+    except Exception:
+        logger.error("Failed to save snapshot", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to save snapshot")
 
 
@@ -202,6 +202,6 @@ async def delete_snapshot(
             "ok": True,
             "deleted": snapshot_name,
         }
-    except Exception as e:
-        logger.error(f"Failed to delete snapshot {snapshot_name}: {e}", exc_info=True)
+    except Exception:
+        logger.error("Failed to delete snapshot", exc_info=True)
         raise HTTPException(status_code=500, detail="Failed to delete snapshot")
