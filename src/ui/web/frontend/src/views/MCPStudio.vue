@@ -1,46 +1,53 @@
 <template>
-  <main class="mcp-studio">
-    <header class="studio-hero">
-      <img src="/mcp-studio-network.jpg" alt="" class="studio-hero-image" />
+  <main class="mcp-studio dark">
+    <WaveHero size="small" variant="purple" wave-height="32px">
       <div class="studio-hero-copy">
-        <div class="studio-kicker"><Blocks :size="16" /> Model Context Protocol</div>
-        <div>
+        <div class="studio-heading">
+          <div class="studio-kicker"><Blocks :size="16" /> {{ t('mcpStudio.kicker') }}</div>
           <div class="studio-title-line">
-            <h1>MCP Studio</h1>
-            <span class="status-badge" :class="status.ok ? 'status-online' : 'status-offline'">
-              <span class="status-dot" />
-              {{ status.ok ? 'Online' : 'Offline' }}
-            </span>
+            <h1>{{ t('mcpStudio.title') }}</h1>
+            <StatusBadge
+              :status="status.ok ? 'success' : 'error'"
+              :label="status.ok ? t('mcpStudio.status.online') : t('mcpStudio.status.offline')"
+              size="md"
+              show-icon
+            />
           </div>
-          <p>{{ status.transport }} · {{ status.exposedToolCount }} tools · {{ accessLabel }}</p>
+          <p>{{ t('mcpStudio.summary', { transport: status.transport, count: status.exposedToolCount, access: accessLabel }) }}</p>
         </div>
         <div class="studio-actions">
-          <button
-            class="icon-button"
-            type="button"
-            title="Refresh MCP status"
+          <LoadingButton
+            variant="outline"
+            size="sm"
+            :icon="RefreshCw"
+            :loading="loading"
+            :loading-text="t('mcpStudio.actions.refreshing')"
             :disabled="loading"
             @click="loadStatus"
           >
-            <RefreshCw :size="17" :class="{ spin: loading }" />
-            <span class="sr-only">Refresh MCP status</span>
-          </button>
-          <button class="primary-button" type="button" :disabled="creating" @click="createTool">
-            <Loader2 v-if="creating" :size="17" class="spin" />
-            <Plus v-else :size="17" />
-            New MCP tool
-          </button>
+            {{ t('mcpStudio.actions.refresh') }}
+          </LoadingButton>
+          <LoadingButton
+            :icon="Plus"
+            :loading="creating"
+            :loading-text="t('mcpStudio.actions.creating')"
+            @click="createTool"
+          >
+            {{ t('mcpStudio.actions.newTool') }}
+          </LoadingButton>
         </div>
       </div>
-    </header>
+    </WaveHero>
+
+    <div class="studio-content">
 
     <div v-if="error" class="error-banner" role="alert">
       <AlertTriangle :size="17" />
       <span>{{ error }}</span>
-      <button type="button" @click="loadStatus">Retry</button>
+      <button type="button" @click="loadStatus">{{ t('mcpStudio.actions.retry') }}</button>
     </div>
 
-    <section class="server-bar" aria-label="MCP server">
+    <section class="server-bar" :aria-label="t('mcpStudio.server.aria')">
       <div class="server-identity">
         <Server :size="18" />
         <div>
@@ -49,39 +56,29 @@
         </div>
       </div>
       <div class="endpoint-value">
-        <span>Endpoint</span>
+        <span>{{ t('mcpStudio.server.endpoint') }}</span>
         <code>{{ status.serverUrl }}</code>
-        <button class="inline-icon" type="button" title="Copy endpoint" @click="copyText(status.serverUrl, 'endpoint')">
+        <button class="inline-icon" type="button" :title="t('mcpStudio.server.copyEndpoint')" @click="copyText(status.serverUrl, 'endpoint')">
           <Check v-if="copied === 'endpoint'" :size="15" />
           <Copy v-else :size="15" />
-          <span class="sr-only">Copy endpoint</span>
+          <span class="sr-only">{{ t('mcpStudio.server.copyEndpoint') }}</span>
         </button>
       </div>
       <div class="protocol-value">
-        <span>Protocol</span>
+        <span>{{ t('mcpStudio.server.protocol') }}</span>
         <strong>{{ latestProtocol }}</strong>
       </div>
     </section>
 
-    <nav class="studio-tabs" aria-label="MCP Studio views">
-      <button
-        v-for="tab in tabs"
-        :key="tab.id"
-        type="button"
-        :class="{ active: activeTab === tab.id }"
-        @click="activeTab = tab.id"
-      >
-        <component :is="tab.icon" :size="16" />
-        {{ tab.label }}
-        <span v-if="tab.id === 'tools'" class="tab-count">{{ status.exposedToolCount }}</span>
-      </button>
+    <nav class="studio-tabs" :aria-label="t('mcpStudio.tabs.aria')">
+      <PageTabs v-model="activeTab" :tabs="studioTabs" />
     </nav>
 
     <section v-if="activeTab === 'tools'" class="tools-layout">
-      <aside class="tool-index" aria-label="MCP tools">
+      <aside class="tool-index" :aria-label="t('mcpStudio.tools.toolListAria')">
         <label class="search-field">
           <Search :size="16" />
-          <input v-model="search" type="search" placeholder="Search tools" />
+          <AppInput v-model="search" type="search" size="sm" :placeholder="t('mcpStudio.tools.searchPlaceholder')" />
         </label>
         <div class="tool-list">
           <button
@@ -95,14 +92,14 @@
             <span class="tool-icon"><Workflow :size="16" /></span>
             <span class="tool-copy">
               <strong>{{ tool.name }}</strong>
-              <small>{{ tool.description || 'Workflow tool' }}</small>
+              <small>{{ tool.description || t('mcpStudio.tools.defaultDescription') }}</small>
             </span>
             <ChevronRight :size="16" />
           </button>
           <div v-if="!visibleTools.length" class="tool-empty">
             <SearchX v-if="search" :size="22" />
             <Blocks v-else :size="22" />
-            <span>{{ search ? 'No matching tools' : 'No MCP tools yet' }}</span>
+            <span>{{ search ? t('mcpStudio.tools.noMatches') : t('mcpStudio.tools.noneYet') }}</span>
           </div>
         </div>
       </aside>
@@ -112,28 +109,29 @@
           <div>
             <div class="tool-name-line">
               <h2>{{ selectedTool.name }}</h2>
-              <span>{{ selectedFields.length }} inputs</span>
+              <span>{{ t('mcpStudio.tools.inputCount', { count: selectedFields.length }) }}</span>
             </div>
-            <p>{{ selectedTool.description || 'Workflow-backed MCP tool' }}</p>
+            <p>{{ selectedTool.description || t('mcpStudio.tools.technicalDescription') }}</p>
           </div>
-          <router-link
+          <LoadingButton
             v-if="selectedSource.id"
-            class="secondary-button"
-            :to="`/templates/builder/${selectedSource.id}`"
+            variant="outline"
+            size="sm"
+            :icon="Pencil"
+            @click="router.push(`/templates/builder/${selectedSource.id}`)"
           >
-            <Pencil :size="15" />
-            Edit workflow
-          </router-link>
+            {{ t('mcpStudio.actions.editWorkflow') }}
+          </LoadingButton>
         </div>
 
         <div class="workbench-body">
           <form class="argument-form" @submit.prevent="runSelected">
             <div class="section-heading">
               <div>
-                <h3>Arguments</h3>
-                <span>JSON Schema</span>
+                <h3>{{ t('mcpStudio.tools.arguments') }}</h3>
+                <span>{{ t('mcpStudio.tools.schema') }}</span>
               </div>
-              <button class="text-button" type="button" @click="resetArguments">Reset</button>
+              <button class="text-button" type="button" @click="resetArguments">{{ t('mcpStudio.actions.reset') }}</button>
             </div>
 
             <div v-if="selectedFields.length" class="field-grid">
@@ -141,74 +139,77 @@
                 <span class="field-label">
                   <code>{{ field.name }}</code>
                   <em>{{ field.type }}</em>
-                  <b v-if="field.required">Required</b>
+                  <b v-if="field.required">{{ t('mcpStudio.tools.required') }}</b>
                 </span>
-                <select
+                <AppSelect
                   v-if="field.enumValues.length"
                   v-model="argumentValues[field.name]"
+                  :options="field.enumValues"
                   :aria-label="field.name"
-                >
-                  <option value="">Select value</option>
-                  <option v-for="option in field.enumValues" :key="String(option)" :value="option">
-                    {{ option }}
-                  </option>
-                </select>
+                  :placeholder="t('mcpStudio.tools.selectValue')"
+                  size="sm"
+                />
                 <label v-else-if="field.type === 'boolean'" class="boolean-control">
                   <input v-model="argumentValues[field.name]" :aria-label="field.name" type="checkbox" />
-                  <span>{{ argumentValues[field.name] ? 'True' : 'False' }}</span>
+                  <span>{{ argumentValues[field.name] ? t('mcpStudio.tools.booleanTrue') : t('mcpStudio.tools.booleanFalse') }}</span>
                 </label>
-                <textarea
+                <AppTextarea
                   v-else-if="field.type === 'object' || field.type === 'array'"
                   v-model="argumentValues[field.name]"
                   :aria-label="field.name"
                   rows="5"
                   spellcheck="false"
                 />
-                <input
+                <AppInput
                   v-else
                   v-model="argumentValues[field.name]"
                   :aria-label="field.name"
                   :type="field.type === 'number' || field.type === 'integer' ? 'number' : 'text'"
                   :step="field.type === 'integer' ? '1' : 'any'"
+                  size="sm"
                 />
                 <small v-if="field.description">{{ field.description }}</small>
               </div>
             </div>
             <div v-else class="no-arguments">
               <Braces :size="20" />
-              <span>This tool accepts no declared arguments.</span>
+              <span>{{ t('mcpStudio.tools.noArguments') }}</span>
             </div>
 
             <div v-if="runError" class="field-error" role="alert">{{ runError }}</div>
-            <button class="run-button" type="submit" :disabled="running">
-              <Loader2 v-if="running" :size="17" class="spin" />
-              <Play v-else :size="17" fill="currentColor" />
-              {{ running ? 'Running' : 'Run tool' }}
-            </button>
+            <LoadingButton
+              class="run-action"
+              type="submit"
+              :icon="Play"
+              :loading="running"
+              :loading-text="t('mcpStudio.actions.running')"
+            >
+              {{ t('mcpStudio.actions.runTool') }}
+            </LoadingButton>
           </form>
 
           <section class="result-panel" aria-live="polite">
             <div class="section-heading">
               <div>
-                <h3>Response</h3>
-                <span>{{ responseState }}</span>
+                <h3>{{ t('mcpStudio.tools.response') }}</h3>
+                <span>{{ responseStateLabel }}</span>
               </div>
               <button
                 v-if="formattedResponse"
                 class="inline-icon"
                 type="button"
-                title="Copy response"
+                :title="t('mcpStudio.tools.copyResponse')"
                 @click="copyText(formattedResponse, 'response')"
               >
                 <Check v-if="copied === 'response'" :size="15" />
                 <Copy v-else :size="15" />
-                <span class="sr-only">Copy response</span>
+                <span class="sr-only">{{ t('mcpStudio.tools.copyResponse') }}</span>
               </button>
             </div>
             <pre v-if="formattedResponse">{{ formattedResponse }}</pre>
             <div v-else class="response-empty">
               <SquareTerminal :size="23" />
-              <span>Tool output</span>
+              <span>{{ t('mcpStudio.tools.output') }}</span>
             </div>
           </section>
         </div>
@@ -216,11 +217,10 @@
 
       <div v-else class="workbench-empty">
         <Blocks :size="28" />
-        <strong>{{ search ? 'No tool selected' : 'Create your first MCP tool' }}</strong>
-        <button v-if="!search" class="primary-button" type="button" @click="createTool">
-          <Plus :size="17" />
-          New MCP tool
-        </button>
+        <strong>{{ search ? t('mcpStudio.tools.noSelection') : t('mcpStudio.actions.createFirst') }}</strong>
+        <LoadingButton v-if="!search" :icon="Plus" @click="createTool">
+          {{ t('mcpStudio.actions.newTool') }}
+        </LoadingButton>
       </div>
     </section>
 
@@ -244,15 +244,14 @@
             <h2>{{ selectedClient.label }}</h2>
             <span>{{ selectedClient.format }}</span>
           </div>
-          <button
-            class="secondary-button"
-            type="button"
+          <LoadingButton
+            variant="outline"
+            size="sm"
+            :icon="copied === 'config' ? Check : Copy"
             @click="copyText(selectedClient.content, 'config')"
           >
-            <Check v-if="copied === 'config'" :size="15" />
-            <Copy v-else :size="15" />
-            {{ copied === 'config' ? 'Copied' : 'Copy' }}
-          </button>
+            {{ copied === 'config' ? t('mcpStudio.actions.copied') : t('mcpStudio.actions.copy') }}
+          </LoadingButton>
         </div>
         <pre>{{ selectedClient.content }}</pre>
       </div>
@@ -266,31 +265,31 @@
             <XCircle v-else :size="17" />
           </span>
           <strong>{{ checkItem.label }}</strong>
-          <small>{{ checkItem.pass ? 'Pass' : 'Review' }}</small>
+          <small>{{ checkItem.pass ? t('mcpStudio.audit.pass') : t('mcpStudio.audit.review') }}</small>
         </div>
       </div>
       <div class="protocol-panel">
         <div class="section-heading">
           <div>
-            <h2>Protocol surface</h2>
-            <span>{{ status.protocolVersions.length }} versions</span>
+            <h2>{{ t('mcpStudio.audit.protocolSurface') }}</h2>
+            <span>{{ t('mcpStudio.audit.versionCount', { count: status.protocolVersions.length }) }}</span>
           </div>
           <ShieldCheck :size="20" />
         </div>
         <dl>
-          <div><dt>Transport</dt><dd>{{ status.transport }}</dd></div>
-          <div><dt>Access</dt><dd>{{ accessLabel }}</dd></div>
-          <div><dt>Tools changed</dt><dd>{{ status.capabilities?.tools?.listChanged ? 'Notified' : 'Static' }}</dd></div>
-          <div><dt>Evidence</dt><dd>{{ evidenceCount }}</dd></div>
+          <div><dt>{{ t('mcpStudio.audit.transport') }}</dt><dd>{{ status.transport }}</dd></div>
+          <div><dt>{{ t('mcpStudio.audit.access') }}</dt><dd>{{ accessLabel }}</dd></div>
+          <div><dt>{{ t('mcpStudio.audit.toolsChanged') }}</dt><dd>{{ status.capabilities?.tools?.listChanged ? t('mcpStudio.audit.notified') : t('mcpStudio.audit.static') }}</dd></div>
+          <div><dt>{{ t('mcpStudio.audit.evidence') }}</dt><dd>{{ evidenceCount }}</dd></div>
         </dl>
       </div>
       <div class="history-panel">
         <div class="section-heading">
           <div>
-            <h2>Session history</h2>
-            <span>{{ history.length }} calls</span>
+            <h2>{{ t('mcpStudio.audit.sessionHistory') }}</h2>
+            <span>{{ t('mcpStudio.audit.callCount', { count: history.length }) }}</span>
           </div>
-          <button v-if="history.length" class="text-button" type="button" @click="history = []">Clear</button>
+          <button v-if="history.length" class="text-button" type="button" @click="history = []">{{ t('mcpStudio.actions.clear') }}</button>
         </div>
         <div v-if="history.length" class="history-list">
           <button
@@ -304,14 +303,16 @@
             <small>{{ entry.duration }} ms</small>
           </button>
         </div>
-        <div v-else class="history-empty">No calls in this session.</div>
+        <div v-else class="history-empty">{{ t('mcpStudio.audit.noCalls') }}</div>
       </div>
     </section>
+    </div>
   </main>
 </template>
 
 <script setup>
 import { computed, onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRouter } from 'vue-router'
 import {
   AlertTriangle,
@@ -322,7 +323,6 @@ import {
   ChevronRight,
   Copy,
   FileCheck2,
-  Loader2,
   Pencil,
   Play,
   PlugZap,
@@ -340,6 +340,13 @@ import {
 } from 'lucide-vue-next'
 import { callMcpTool, getMcpStatus } from '@/api/mcp'
 import { templatesAPI } from '@/api/templates'
+import AppInput from '@/components/common/AppInput.vue'
+import AppSelect from '@/components/common/AppSelect.vue'
+import AppTextarea from '@/components/common/AppTextarea.vue'
+import LoadingButton from '@/components/common/LoadingButton.vue'
+import PageTabs from '@/components/common/PageTabs.vue'
+import StatusBadge from '@/components/common/StatusBadge.vue'
+import WaveHero from '@/components/common/WaveHero.vue'
 import {
   auditChecks,
   clientConfigurations,
@@ -352,6 +359,7 @@ import {
 } from '@/features/mcp/studioModel'
 
 const router = useRouter()
+const { t } = useI18n()
 const loading = ref(false)
 const creating = ref(false)
 const running = ref(false)
@@ -364,15 +372,20 @@ const selectedToolName = ref('')
 const selectedClientId = ref('codex')
 const argumentValues = ref({})
 const response = ref(null)
-const responseState = ref('Ready')
+const responseState = ref('ready')
 const copied = ref('')
 const history = ref([])
 
 const tabs = [
-  { id: 'tools', label: 'Tools', icon: Wrench },
-  { id: 'connect', label: 'Connect', icon: PlugZap },
-  { id: 'audit', label: 'Audit', icon: FileCheck2 },
+  { id: 'tools', labelKey: 'mcpStudio.tabs.tools', icon: Wrench },
+  { id: 'connect', labelKey: 'mcpStudio.tabs.connect', icon: PlugZap },
+  { id: 'audit', labelKey: 'mcpStudio.tabs.audit', icon: FileCheck2 },
 ]
+const studioTabs = computed(() => tabs.map(tab => ({
+  ...tab,
+  label: t(tab.labelKey),
+  count: tab.id === 'tools' ? status.value.exposedToolCount : undefined,
+})))
 
 const visibleTools = computed(() => {
   const needle = search.value.trim().toLowerCase()
@@ -386,17 +399,28 @@ const selectedTool = computed(() => (
 ))
 const selectedFields = computed(() => schemaFields(selectedTool.value))
 const selectedSource = computed(() => toolSource(selectedTool.value))
-const clients = computed(() => clientConfigurations(status.value))
+const clients = computed(() => clientConfigurations(status.value).map(client => ({
+  ...client,
+  label: client.id === 'desktop' || client.id === 'http'
+    ? t(`mcpStudio.clients.${client.id}`)
+    : client.label,
+})))
 const selectedClient = computed(() => (
   clients.value.find(client => client.id === selectedClientId.value) || clients.value[0]
 ))
-const checks = computed(() => auditChecks(status.value))
+const checks = computed(() => auditChecks(status.value).map(checkItem => {
+  const labelKey = checkItem.id === 'access'
+    ? (status.value.auth.localLoopbackAccountless ? 'mcpStudio.checks.accessLocal' : 'mcpStudio.checks.accessBearer')
+    : `mcpStudio.checks.${checkItem.id}`
+  return { ...checkItem, label: t(labelKey) }
+}))
 const latestProtocol = computed(() => status.value.protocolVersions[0] || 'MCP')
 const accessLabel = computed(() => {
-  if (status.value.auth.localLoopbackAccountless) return 'Local accountless'
-  if (status.value.auth.configured) return 'Bearer connected'
-  return status.value.auth.required ? 'Bearer required' : 'Operator access'
+  if (status.value.auth.localLoopbackAccountless) return t('mcpStudio.access.localAccountless')
+  if (status.value.auth.configured) return t('mcpStudio.access.bearerConnected')
+  return status.value.auth.required ? t('mcpStudio.access.bearerRequired') : t('mcpStudio.access.operator')
 })
+const responseStateLabel = computed(() => t(`mcpStudio.tools.${responseState.value}`))
 const formattedResponse = computed(() => {
   if (!response.value) return ''
   return JSON.stringify(response.value, null, 2)
@@ -410,7 +434,7 @@ function selectTool(tool) {
   selectedToolName.value = tool.name
   resetArguments()
   response.value = null
-  responseState.value = 'Ready'
+  responseState.value = 'ready'
   runError.value = ''
 }
 
@@ -425,7 +449,7 @@ async function loadStatus() {
   const result = await getMcpStatus()
   status.value = normalizeMcpStatus(result)
   loading.value = false
-  if (!status.value.ok) error.value = result.error || 'MCP status unavailable'
+  if (!status.value.ok) error.value = result.error || t('mcpStudio.errors.statusUnavailable')
   if (!selectedTool.value && status.value.tools.length) selectTool(status.value.tools[0])
 }
 
@@ -436,7 +460,7 @@ async function createTool() {
   const result = await templatesAPI.createTemplate(createMcpStarter(status.value.exposedToolCount + 1))
   creating.value = false
   if (!result.ok) {
-    error.value = result.error || 'Unable to create MCP tool'
+    error.value = result.error || t('mcpStudio.errors.createFailed')
     return
   }
   router.push(`/templates/builder/${result.template.id}`)
@@ -454,14 +478,14 @@ async function runSelected() {
   }
 
   running.value = true
-  responseState.value = 'Running'
+  responseState.value = 'running'
   const startedAt = performance.now()
   const result = await callMcpTool(selectedTool.value.name, args)
   const duration = Math.round(performance.now() - startedAt)
   running.value = false
   response.value = result.response || { error: result.error }
-  responseState.value = result.ok ? 'Completed' : 'Failed'
-  if (!result.ok) runError.value = result.error || 'Tool call failed'
+  responseState.value = result.ok ? 'completed' : 'failed'
+  if (!result.ok) runError.value = result.error || t('mcpStudio.errors.callFailed')
   history.value = [{
     id: `${Date.now()}-${selectedTool.value.name}`,
     tool: selectedTool.value.name,
@@ -479,7 +503,7 @@ function restoreHistory(entry) {
     selectedToolName.value = tool.name
     argumentValues.value = { ...initialArguments(tool), ...entry.args }
     response.value = entry.response
-    responseState.value = entry.ok ? 'Completed' : 'Failed'
+    responseState.value = entry.ok ? 'completed' : 'failed'
   }
 }
 

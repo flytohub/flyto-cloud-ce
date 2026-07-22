@@ -4,7 +4,7 @@
     :class="[
       'loading-button',
       `variant-${variant}`,
-      `size-${size}`,
+      `loading-button--${size}`,
       { 'is-loading': loading, 'is-disabled': disabled || loading }
     ]"
     :disabled="disabled || loading"
@@ -91,19 +91,19 @@ function handleClick(event) {
 }
 
 /* Sizes */
-.size-sm {
+.loading-button--sm {
   padding: 6px 12px;
   font-size: 13px;
   min-height: 44px;
 }
 
-.size-md {
+.loading-button--md {
   padding: 10px 20px;
   font-size: 14px;
   min-height: 44px;
 }
 
-.size-lg {
+.loading-button--lg {
   padding: 14px 28px;
   font-size: 15px;
   min-height: 48px;

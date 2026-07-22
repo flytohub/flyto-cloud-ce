@@ -53,6 +53,38 @@ export function initialArguments(tool) {
   }))
 }
 
+function invalidStructuredValue(field) {
+  return new Error(`${field.name} must be valid JSON ${field.type}`)
+}
+
+function parseStructuredValue(field, raw) {
+  let parsed
+  try {
+    parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
+  } catch {
+    throw invalidStructuredValue(field)
+  }
+
+  const matchesType = field.type === 'array'
+    ? Array.isArray(parsed)
+    : Boolean(parsed) && typeof parsed === 'object' && !Array.isArray(parsed)
+  if (!matchesType) throw invalidStructuredValue(field)
+  return parsed
+}
+
+function parseFieldValue(field, raw) {
+  if (field.type === 'number' || field.type === 'integer') {
+    const number = Number(raw)
+    if (!Number.isFinite(number)) throw new Error(`${field.name} must be a number`)
+    return field.type === 'integer' ? Math.trunc(number) : number
+  }
+  if (field.type === 'boolean') return raw === true || raw === 'true'
+  if (field.type === 'object' || field.type === 'array') {
+    return parseStructuredValue(field, raw)
+  }
+  return String(raw)
+}
+
 export function parseArguments(tool, values) {
   const output = {}
   for (const field of schemaFields(tool)) {
@@ -60,31 +92,7 @@ export function parseArguments(tool, values) {
     const empty = raw === '' || raw === undefined || raw === null
     if (empty && field.required) throw new Error(`${field.name} is required`)
     if (empty) continue
-
-    if (field.type === 'number' || field.type === 'integer') {
-      const number = Number(raw)
-      if (!Number.isFinite(number)) throw new Error(`${field.name} must be a number`)
-      output[field.name] = field.type === 'integer' ? Math.trunc(number) : number
-      continue
-    }
-    if (field.type === 'boolean') {
-      output[field.name] = raw === true || raw === 'true'
-      continue
-    }
-    if (field.type === 'object' || field.type === 'array') {
-      try {
-        const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw
-        if (field.type === 'array' && !Array.isArray(parsed)) throw new Error('array required')
-        if (field.type === 'object' && (Array.isArray(parsed) || !parsed || typeof parsed !== 'object')) {
-          throw new Error('object required')
-        }
-        output[field.name] = parsed
-      } catch {
-        throw new Error(`${field.name} must be valid JSON ${field.type}`)
-      }
-      continue
-    }
-    output[field.name] = String(raw)
+    output[field.name] = parseFieldValue(field, raw)
   }
   return output
 }
@@ -162,6 +170,16 @@ export function sanitizeToolName(value) {
     .replace(/^_+|_+$/g, '')
 }
 
+function createMcpTrigger(toolName) {
+  const params = {
+    trigger_type: 'mcp',
+    tool_name: toolName,
+    tool_description: `Run ${toolName}`,
+    config: { input_fields: [] },
+  }
+  return { id: 'mcp_trigger', module: 'flow.trigger', params }
+}
+
 export function createMcpStarter(index = 1) {
   const toolName = starterToolName(index)
   return {
@@ -169,18 +187,7 @@ export function createMcpStarter(index = 1) {
     description: `Callable workflow tool: ${toolName}`,
     category: 'automation',
     tags: ['mcp', 'agent-tool'],
-    steps: [
-      {
-        id: 'mcp_trigger',
-        module: 'flow.trigger',
-        params: {
-          trigger_type: 'mcp',
-          tool_name: toolName,
-          tool_description: `Run ${toolName}`,
-          config: { input_fields: [] },
-        },
-      },
-    ],
+    steps: [createMcpTrigger(toolName)],
     ui: { sections: [] },
   }
 }

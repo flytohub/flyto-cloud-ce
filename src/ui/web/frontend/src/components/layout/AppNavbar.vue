@@ -5,7 +5,7 @@
         <router-link to="/" aria-label="Flyto2 Flow" class="group flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3">
           <img src="/logo.png" alt="Flyto2" class="brand-logo w-auto transition-transform duration-300 group-hover:scale-105" />
         </router-link>
-        <div class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex" aria-label="Primary navigation">
+        <div class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex" :aria-label="t('mcpStudio.primaryNavigation')">
           <router-link v-for="item in navigation" :key="item.to" :to="item.to" class="nav-link">
             <component :is="item.icon" :size="18" />
             <span>{{ item.label }}</span>
@@ -19,7 +19,7 @@
             class="menu-button lg:hidden"
             type="button"
             :aria-expanded="menuOpen"
-            aria-label="Toggle navigation"
+            :aria-label="t('mcpStudio.toggleNavigation')"
             @click="menuOpen = !menuOpen"
           >
             <X v-if="menuOpen" :size="21" />
@@ -47,17 +47,19 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { Activity, Cable, GitBranch, KeyRound, Menu, X } from 'lucide-vue-next'
 import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 
+const { t } = useI18n()
 const menuOpen = ref(false)
-const navigation = [
-  { to: '/my-templates', label: 'Workflows', icon: GitBranch },
-  { to: '/mcp', label: 'MCP', icon: Cable },
-  { to: '/variables', label: 'Variables', icon: KeyRound },
-  { to: '/observability', label: 'Monitor', icon: Activity },
-]
+const navigation = computed(() => [
+  { to: '/my-templates', label: t('workflow.title'), icon: GitBranch },
+  { to: '/mcp', label: t('mcpStudio.nav'), icon: Cable },
+  { to: '/variables', label: t('variables.title'), icon: KeyRound },
+  { to: '/observability', label: t('observability.title'), icon: Activity },
+])
 </script>
 
 <style scoped>
