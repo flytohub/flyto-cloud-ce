@@ -6,8 +6,10 @@
   contracts.
 - Read `docs/ce-cloud-boundary.md`. Hosted product source belongs only in the
   downstream `flyto-cloud` repository.
-- Shared fixes land in Flyto2 Flow first and flow downstream. Do not add hosted
-  compatibility shims to make a downstream merge easier.
+- Shared fixes normally land in Flyto2 Flow first and flow downstream. A
+  generic fix discovered in Cloud may return only through the allowlisted
+  backport workflow and must pass every Flow purity and security gate. Do not
+  add hosted compatibility shims to make synchronization easier.
 - Never include credentials, customer data, production URLs, or generated
   runtime state.
 
@@ -20,17 +22,23 @@ change, run the complete CE gate:
 make verify
 ```
 
-## Developer Certificate Of Origin
+## License And Contributor Agreement
 
-Every commit must include a `Signed-off-by` trailer certifying the Developer
-Certificate of Origin:
+Current contributions are accepted under the root PolyForm Shield license and
+the [Flyto2 Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md).
+The CLA gives Flyto2 the rights needed to publish the same generic work in
+Flyto2 Flow and Flyto2 Cloud and to offer separate commercial licenses.
 
-```bash
-git commit --signoff
+Every commit must contain both trailers:
+
+```text
+Signed-off-by: Your Name <you@example.com>
+Flyto2-CLA: accepted
 ```
 
-By contributing, you agree that your contribution is licensed under Apache
-License 2.0. See `DEVELOPER_CERTIFICATE_OF_ORIGIN.md`.
+`git commit --signoff` adds the first trailer. Add the exact CLA trailer to the
+commit message. Do not submit code if you cannot make the grants and
+representations in the CLA.
 
 ## Pull Requests
 
@@ -39,3 +47,5 @@ License 2.0. See `DEVELOPER_CERTIFICATE_OF_ORIGIN.md`.
 - Document migrations and compatibility changes.
 - Run `python scripts/check-ce-purity.py` and add boundary regression tests when
   a change touches routes, navigation, dependencies, networking, or packaging.
+- Run `python scripts/check_license_policy.py` when a change touches licensing,
+  contribution terms, branding, release metadata, or the sync contract.

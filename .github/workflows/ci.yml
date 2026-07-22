@@ -15,8 +15,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  dco:
-    name: DCO sign-off
+  contribution-terms:
+    name: Contribution terms
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +26,7 @@ jobs:
       - env:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: python scripts/check_dco.py --base "$BASE_SHA" --head "$HEAD_SHA"
+        run: python scripts/check_contribution_terms.py --base "$BASE_SHA" --head "$HEAD_SHA"
 
   boundary:
     name: Boundary and inventory
@@ -38,6 +38,7 @@ jobs:
           python-version: "3.12"
       - run: pip install packaging
       - run: python scripts/check-ce-purity.py .
+      - run: python scripts/check_license_policy.py .
       - run: python scripts/audit_ce_dependencies.py .
 
   backend:

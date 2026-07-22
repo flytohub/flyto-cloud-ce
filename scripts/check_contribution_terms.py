@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Verify Signed-off-by trailers for every commit in a Git revision range."""
+"""Verify provenance and CLA acceptance trailers for a Git revision range."""
 
 from __future__ import annotations
 
@@ -10,6 +10,7 @@ import sys
 
 
 SIGNOFF_RE = re.compile(r"(?mi)^Signed-off-by:\s+.+\s+<[^<>\s]+@[^<>\s]+>\s*$")
+CLA_RE = re.compile(r"(?mi)^Flyto2-CLA:\s+accepted\s*$")
 
 
 def _git(*args: str) -> str:
@@ -23,20 +24,25 @@ def main() -> int:
     args = parser.parse_args()
 
     commits = _git("rev-list", "--reverse", f"{args.base}..{args.head}").splitlines()
-    missing = []
+    failures = []
     for commit in commits:
         message = _git("show", "-s", "--format=%B", commit)
+        missing = []
         if not SIGNOFF_RE.search(message):
+            missing.append("Signed-off-by")
+        if not CLA_RE.search(message):
+            missing.append("Flyto2-CLA: accepted")
+        if missing:
             subject = _git("show", "-s", "--format=%s", commit)
-            missing.append(f"{commit[:12]} {subject}")
+            failures.append(f"{commit[:12]} {subject}: {', '.join(missing)}")
 
-    if missing:
-        print("DCO check failed; commits missing a valid Signed-off-by trailer:", file=sys.stderr)
-        for item in missing:
-            print(f"  {item}", file=sys.stderr)
+    if failures:
+        print("contribution terms check failed:", file=sys.stderr)
+        for failure in failures:
+            print(f"  {failure}", file=sys.stderr)
         return 1
 
-    print(f"DCO check passed for {len(commits)} commit(s)")
+    print(f"contribution terms passed for {len(commits)} commit(s)")
     return 0
 
 

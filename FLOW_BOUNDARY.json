@@ -3,6 +3,10 @@
   "product": "Flyto2 Flow",
   "repository": "flyto-flow",
   "upstream": true,
+  "canonical_shared_baseline": true,
+  "license": "PolyForm-Shield-1.0.0",
+  "historical_apache_boundary": "9398a622a2b53bde6df5e661d71735d1cefdbabc",
+  "reciprocal_sync_contract": "FLOW_CLOUD_SYNC.json",
   "workspace_model": "single-local-workspace",
   "implicit_outbound_network": false,
   "bundled_runtime": [
@@ -29,5 +33,11 @@
     "managed runners and cloud bridges",
     "analytics, telemetry, and phone-home",
     "online dependency updates and CDN-loaded code"
+  ],
+  "sync_rules": [
+    "Flow to Cloud copies only allowlisted shared paths",
+    "Cloud to Flow always opens a pull request",
+    "Flow purity and CodeQL gates run before a backport can merge",
+    "Cloud-only source is never synchronized into Flow"
   ]
 }

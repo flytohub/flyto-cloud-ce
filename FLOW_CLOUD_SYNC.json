@@ -1,0 +1,60 @@
+{
+  "schema": "flyto.flow-cloud-sync.v1",
+  "flow_repository": "flytohub/flyto-flow",
+  "cloud_repository": "flytohub/flyto-cloud",
+  "mode": "guarded-bidirectional-pull-request",
+  "canonical_baseline": "flytohub/flyto-flow",
+  "cloud_backports": "allowlisted-shared-files-only",
+  "shared_paths": [
+    "FLOW_CLOUD_SYNC.json",
+    "src/ui/web/frontend/src/components/workflowCanvas/CanvasControls.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/CaseSelectorModal.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/CheckpointMarker.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/DeleteChildrenDialog.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/ExecutionControlBar.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/index.js",
+    "src/ui/web/frontend/src/components/workflowCanvas/NodeActionBar.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/NodeCardContent.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/NodeContextMenu.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/NodeSearchDialog.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/NoteEditModal.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/PinnedBadge.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/edges/GlowEdge.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/edges/index.js",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/AIAgentNode.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/AISubNode.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/BranchNode.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/ContainerNode.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/index.js",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/LoopNode.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/NodeExecutionBadges.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/StickyNote.vue",
+    "src/ui/web/frontend/src/components/workflowCanvas/nodes/SwitchNode.vue",
+    "src/ui/web/frontend/src/styles/nodeDesignSystem.css",
+    "src/ui/web/frontend/src/styles/nodeShapeEffects.css",
+    "src/ui/web/frontend/src/styles/vueflow-overrides.css"
+  ],
+  "forbidden_cloud_to_flow_markers": [
+    "firebase",
+    "firestore",
+    "stripe",
+    "/api/auth",
+    "billing",
+    "collaboration",
+    "marketplace",
+    "organizationstore",
+    "telemetry",
+    "userstore"
+  ],
+  "required_flow_gates": [
+    "Flyto2 Flow Verify / Boundary and inventory",
+    "Flyto2 Flow Verify / Backend CE smoke",
+    "Flyto2 Flow Verify / Frontend CE build",
+    "CodeQL"
+  ],
+  "license_policy": {
+    "flow": "PolyForm-Shield-1.0.0",
+    "cloud": "Flyto2-Source-Available-1.0",
+    "historical_flow_boundary": "9398a622a2b53bde6df5e661d71735d1cefdbabc"
+  }
+}

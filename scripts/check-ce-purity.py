@@ -11,9 +11,15 @@ from pathlib import Path
 
 
 REQUIRED_FILES = (
+    "COMMERCIAL_LICENSE.md",
+    "CONTRIBUTOR_LICENSE_AGREEMENT.md",
     "FLOW_BOUNDARY.json",
+    "FLOW_CLOUD_SYNC.json",
+    "LICENSE",
+    "LICENSE_HISTORY.md",
     "README.md",
     "docs/ce-cloud-boundary.md",
+    "docs/flow-cloud-sync.md",
     "docs/open-core.md",
     "install/Dockerfile.ce",
     "install/docker-compose.ce.yml",
@@ -128,6 +134,28 @@ def check(root: Path) -> list[str]:
                     failures.append(f"missing shared UI shell: {rel}")
         except (OSError, json.JSONDecodeError) as exc:
             failures.append(f"FLOW_BOUNDARY.json is invalid: {exc}")
+
+    sync_path = root / "FLOW_CLOUD_SYNC.json"
+    if sync_path.is_file():
+        try:
+            sync = json.loads(sync_path.read_text(encoding="utf-8"))
+            if sync.get("schema") != "flyto.flow-cloud-sync.v1":
+                failures.append("FLOW_CLOUD_SYNC.json has the wrong schema")
+            if sync.get("mode") != "guarded-bidirectional-pull-request":
+                failures.append("Flow/Cloud sync must use guarded pull requests")
+            if sync.get("canonical_baseline") != "flytohub/flyto-flow":
+                failures.append("Flyto2 Flow must remain the canonical shared baseline")
+            shared_paths = sync.get("shared_paths", [])
+            if len(shared_paths) != len(set(shared_paths)):
+                failures.append("FLOW_CLOUD_SYNC.json contains duplicate shared paths")
+            for rel in shared_paths:
+                candidate = Path(rel)
+                if candidate.is_absolute() or ".." in candidate.parts:
+                    failures.append(f"unsafe shared sync path: {rel}")
+                elif not (root / candidate).is_file():
+                    failures.append(f"missing shared sync path: {rel}")
+        except (OSError, json.JSONDecodeError) as exc:
+            failures.append(f"FLOW_CLOUD_SYNC.json is invalid: {exc}")
 
     source_files = list(_source_files(root))
     for path in source_files:

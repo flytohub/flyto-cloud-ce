@@ -1,0 +1,31 @@
+name: Notify Flyto2 Cloud Sync
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify-flyto2-cloud-sync
+  cancel-in-progress: true
+
+jobs:
+  notify:
+    name: Request guarded Cloud sync
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch Flow update
+        env:
+          GH_TOKEN: ${{ secrets.FLOW_SYNC_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${GH_TOKEN:-}" ]]; then
+            echo "::notice::FLOW_SYNC_TOKEN is not configured; Cloud's scheduled pull remains the fallback"
+            exit 0
+          fi
+          gh api --method POST repos/flytohub/flyto-cloud/dispatches \
+            -f event_type=flow-shared-updated

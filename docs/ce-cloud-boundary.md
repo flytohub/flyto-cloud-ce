@@ -55,15 +55,23 @@ checked without `pip`, then atomically activated for the next process start.
 
 ## Merge discipline
 
-1. Shared fixes land in Flow first.
-2. `flyto-cloud` merges or cherry-picks Flow changes.
-3. Merge conflicts are resolved downstream; Flow never accepts hosted shims to
-   make a downstream merge easier.
-4. Downstream frontend additions enter through `@edition`; downstream backend
+1. Shared fixes normally land in Flow first.
+2. Cloud automatically pulls allowlisted shared paths from Flow after Flow
+   `main` changes, using a guarded pull request.
+3. A generic shared fix that lands in Cloud `main` may be proposed back to Flow
+   only for paths in `FLOW_CLOUD_SYNC.json`. It must pass Flow purity and
+   security checks and never writes directly to Flow `main`.
+4. Merge conflicts stop automation and are resolved in a reviewed pull
+   request. Flow never accepts hosted shims to make synchronization easier.
+5. Downstream frontend additions enter through `@edition`; downstream backend
    additions use a separate application entry point and router composition.
-5. Every Flow pull request runs `python scripts/check-ce-purity.py`.
+6. Every Flow pull request runs `python scripts/check-ce-purity.py` and
+   `python scripts/check_license_policy.py`.
 
 `@edition` is an additive seam, not a second application. It may fill the
 named navigation, header-action, footer, banner, route, and page-extension
 slots. It may not replace shared layout shells or copy a shared page into a
 Cloud-only variant. Visual fixes to shared surfaces always land in Flow first.
+
+See [Flow/Cloud Reciprocal Sync](flow-cloud-sync.md) for triggers, credentials,
+conflict handling, loop prevention, and recovery.

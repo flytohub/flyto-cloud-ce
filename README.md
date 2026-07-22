@@ -2,7 +2,7 @@
 
 > Build workflows visually. Publish them as MCP tools.
 
-Flyto2 Flow is an open-source, self-hosted visual workflow and MCP builder powered by `flyto-core`. Combine browser automation, APIs, files, data processing, and control-flow atoms in the UI, test the workflow locally, then expose it as an MCP tool.
+Flyto2 Flow is a source-available, self-hosted visual workflow and MCP builder powered by `flyto-core`. Combine browser automation, APIs, files, data processing, and control-flow atoms in the UI, test the workflow locally, then expose it as an MCP tool.
 
 ## Demo
 
@@ -67,10 +67,12 @@ python src/ui/web/backend/main_offline.py --host 127.0.0.1 --port 9000 --no-relo
 
 ## Project Boundary
 
-Flyto2 Flow is the clean upstream product. `flyto-cloud` may consume and extend it through documented edition seams, but Cloud-only source must never be merged into this repository. Generic fixes flow from Flyto2 Flow to Flyto2 Cloud; membership, hosted services, billing, chat, telemetry, and remote collaboration stay downstream.
+Flyto2 Flow is the clean canonical baseline. `flyto-cloud` consumes and extends it through documented edition seams, but Cloud-only source must never be merged into this repository. Shared fixes normally flow from Flow to Cloud; a generic fix discovered in Cloud may return only through the allowlisted, purity-gated backport process. Membership, hosted services, billing, chat, telemetry, and remote collaboration stay downstream.
 
-See [CE/Cloud Boundary](docs/ce-cloud-boundary.md), [Edition Matrix](docs/edition-matrix.md), and [Contributing](CONTRIBUTING.md).
+See [CE/Cloud Boundary](docs/ce-cloud-boundary.md), [Flow/Cloud Sync](docs/flow-cloud-sync.md), [Edition Matrix](docs/edition-matrix.md), and [Contributing](CONTRIBUTING.md).
 
 ## License and Trademark
 
-The current code license is Apache License 2.0. It permits use, modification, distribution, and commercial resale; the license does not grant rights to Flyto2 names or logos. See [TRADEMARKS.md](TRADEMARKS.md) and [Licensing Strategy](docs/licensing-strategy.md) before changing the project license or offering an official commercial distribution.
+Current revisions use the [PolyForm Shield License 1.0.0](LICENSE): you may inspect, use, modify, and distribute the code for permitted purposes, but you may not use it to provide a product or service that competes with Flyto2. This is source-available/fair-code, not OSI-approved open source. Revisions through commit `9398a62` remain Apache-2.0 and cannot be retroactively restricted.
+
+Read [License History](LICENSE_HISTORY.md), [Commercial Licensing](COMMERCIAL_LICENSE.md), [Trademark Policy](TRADEMARKS.md), and the [Licensing Strategy](docs/licensing-strategy.md) before redistribution or commercial use.

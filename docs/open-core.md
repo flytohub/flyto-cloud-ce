@@ -1,6 +1,6 @@
-# Flyto2 Flow Upstream Model
+# Flyto2 Flow Source-Available Upstream Model
 
-Flyto2 Flow is the canonical open-source upstream. It contains the visual
+Flyto2 Flow is the canonical source-available baseline. It contains the visual
 workflow editor, local execution, local storage, evidence and replay, and MCP
 delivery. It is a complete single-workspace product and does not depend on a
 hosted Flyto2 service.
@@ -12,13 +12,16 @@ flags hidden inside Flow; their source stays downstream.
 ## Direction of change
 
 ```text
-generic editor/runtime fix     Flyto2 Flow  -> flyto-cloud
+generic editor/runtime fix     Flyto2 Flow <-> guarded Cloud backport
 hosted product capability      flyto-cloud only
 ```
 
-Changes that apply to both products must be implemented against Flow first and
-then merged downstream. A downstream change may return upstream only after all
-hosted dependencies and identity assumptions have been removed.
+Changes that apply to both products normally land in Flow first and then move
+downstream. When a generic defect is discovered and fixed in Cloud, automation
+may copy only the paths declared in `FLOW_CLOUD_SYNC.json` into a Flow pull
+request. That pull request must remove every hosted dependency and identity
+assumption and pass Flow purity, frontend, backend, container, contribution,
+and CodeQL gates before merge. Automation never writes Flow `main` directly.
 
 ## Stable seams
 

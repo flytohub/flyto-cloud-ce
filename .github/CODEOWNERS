@@ -1,7 +1,15 @@
 * @flytohub/platform
 
 /LICENSE @flytohub/platform
+/LICENSE_HISTORY.md @flytohub/platform
+/COMMERCIAL_LICENSE.md @flytohub/platform
+/CONTRIBUTOR_LICENSE_AGREEMENT.md @flytohub/platform
 /NOTICE @flytohub/platform
-/OPEN_CORE_MANIFEST.json @flytohub/platform
+/TRADEMARKS.md @flytohub/platform
+/FLOW_BOUNDARY.json @flytohub/platform
+/FLOW_CLOUD_SYNC.json @flytohub/platform
+/.github/workflows/notify-cloud-sync.yml @flytohub/platform
 /.github/ @flytohub/platform
-/scripts/audit-cloud-ce-boundary.py @flytohub/platform
+/scripts/check-ce-purity.py @flytohub/platform
+/scripts/check_license_policy.py @flytohub/platform
+/scripts/check_contribution_terms.py @flytohub/platform

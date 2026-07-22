@@ -1,5 +1,7 @@
 """Accountless, local-only trigger utilities."""
 
+import logging
+
 from typing import Any, Dict
 
 from fastapi import APIRouter, HTTPException, Query
@@ -9,6 +11,8 @@ from services.infra.scheduler import CronParser
 from .models import CronValidateRequest
 
 
+logger = logging.getLogger(__name__)
+
 local_router = APIRouter(prefix="/triggers", tags=["triggers"])
 
 
@@ -16,7 +20,10 @@ local_router = APIRouter(prefix="/triggers", tags=["triggers"])
 async def validate_cron_expression(request: CronValidateRequest) -> Dict[str, Any]:
     result = CronParser.validate(request.expression)
     if not result.valid:
-        return {"ok": False, "valid": False, "error": result.error}
+        # Parser errors can include internal exception text. Keep the detailed
+        # failure on the server side and expose only a stable client message.
+        logger.warning("Cron validation failed: %s", result.error)
+        return {"ok": False, "valid": False, "error": "Invalid cron expression"}
     try:
         next_run = CronParser.get_next_run(request.expression)
         return {
@@ -25,8 +32,13 @@ async def validate_cron_expression(request: CronValidateRequest) -> Dict[str, An
             "expression": request.expression,
             "next_run_at": next_run.isoformat(),
         }
-    except Exception as exc:
-        return {"ok": False, "valid": False, "error": str(exc)}
+    except Exception:
+        logger.exception("Failed to calculate next cron run")
+        return {
+            "ok": False,
+            "valid": False,
+            "error": "Unable to calculate next cron run",
+        }
 
 
 @local_router.get("/cron/next")
@@ -49,4 +61,5 @@ async def get_cron_next_run(
             "next_run_at": next_runs[0] if next_runs else None,
         }
     except Exception as exc:
-        raise HTTPException(status_code=400, detail=f"Invalid cron expression: {exc}") from exc
+        logger.exception("Invalid cron expression")
+        raise HTTPException(status_code=400, detail="Invalid cron expression") from exc

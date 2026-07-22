@@ -171,3 +171,33 @@ def test_purity_gate_passes():
         timeout=60,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_license_policy_gate_passes():
+    result = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/check_license_policy.py"), str(ROOT)],
+        capture_output=True,
+        text=True,
+        timeout=60,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
+
+
+@pytest.mark.asyncio
+async def test_cron_errors_do_not_expose_exception_text(monkeypatch):
+    from api.triggers.local_routes import get_cron_next_run, validate_cron_expression
+    from api.triggers.models import CronValidateRequest
+    from services.infra.scheduler import CronParser
+
+    def fail(*_args, **_kwargs):
+        raise RuntimeError("secret-internal-error")
+
+    monkeypatch.setattr(CronParser, "get_next_run", fail)
+    validation = await validate_cron_expression(CronValidateRequest(expression="* * * * *"))
+    assert validation["error"] == "Invalid cron expression"
+    assert "secret-internal-error" not in str(validation)
+
+    with pytest.raises(Exception) as error:
+        await get_cron_next_run("* * * * *")
+    assert getattr(error.value, "detail", None) == "Invalid cron expression"
+    assert "secret-internal-error" not in str(getattr(error.value, "detail", ""))
