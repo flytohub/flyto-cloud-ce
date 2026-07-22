@@ -10,10 +10,6 @@ import {
 } from 'lucide-vue-next'
 import { useNodeOutputStore } from '@/stores/execution'
 
-function escapeSelectorText(value) {
-  return String(value ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"')
-}
-
 export function useElementSuggestions(props, emit) {
   const nodeOutputStore = useNodeOutputStore()
 
@@ -376,4 +372,8 @@ export function useElementSuggestions(props, emit) {
     selectItem,
     valueKey,
   }
+}
+
+function escapeSelectorText(value) {
+  return String(value ?? '').replace(/\\/g, '\\\\').replace(/"/g, '\\"')
 }

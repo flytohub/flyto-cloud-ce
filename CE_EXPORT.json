@@ -1270,7 +1270,7 @@
     "src/ui/web/frontend/src/composables/useConfirm.js": "2f08ff135e1682c2a20c1f8d2a93111a11530f120dba02926deb7ac948e272c4",
     "src/ui/web/frontend/src/composables/useDarkMode.js": "2a419155b28990e6dbc09c77e173648b7bb7c2d5c763128380aebc40bfbb13ac",
     "src/ui/web/frontend/src/composables/useElementPicker.js": "35f3a44494f6e850d86cba13f7e346c6f9f7fc4b800d0d58d61d56cc3bc83cbd",
-    "src/ui/web/frontend/src/composables/useElementSuggestions.js": "78f8d1cc20e2388627613da1b09fe11c9e6b3a7c207faea64b800a56f8c9573d",
+    "src/ui/web/frontend/src/composables/useElementSuggestions.js": "e0e2d04cc39df9beeb2cefd5b4c967dd66c4cb300fc9cc3f5356262051992a6b",
     "src/ui/web/frontend/src/composables/useEngineVariables.js": "ec11cb2b976acc7bcbd503b00bf36cc1f2c0847954f64208a2bb7fde3a2e05c3",
     "src/ui/web/frontend/src/composables/useExecutionHistory.js": "f65907f16a8e007d4663292a29d19e7ca7c8fe5d20d8952ac78e3892c2dde178",
     "src/ui/web/frontend/src/composables/useFileInput.js": "59898b55fd7cf95711456bf3cab4bf4e15d404e057b8a1707ded9a7a88e5b08d",
@@ -1733,7 +1733,7 @@
   },
   "package_name": "flyto-cloud-ce",
   "schema": "flyto.ce-release.v1",
-  "source_commit": "f5f652091ad28d6aef91bb7dd084386132c4b0e9",
+  "source_commit": "934b1fe130e13b1dcc9e6c27439c1db1e6bacb7a",
   "source_repository": "https://github.com/flytohub/flyto-cloud",
-  "tree_sha256": "58263f3657b4ca43599d212e7f3bc9854830e44d7b4ceaa9993988526eb19ac3"
+  "tree_sha256": "03c936f3efdac832c43a39e07929afd1babcc3ba1b6b3debfa7665ff050eed61"
 }
