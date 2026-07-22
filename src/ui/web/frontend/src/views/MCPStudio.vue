@@ -1,8 +1,9 @@
 <template>
   <main class="mcp-studio">
-    <header class="studio-header">
-      <div class="studio-heading">
-        <div class="studio-mark" aria-hidden="true"><Blocks :size="22" /></div>
+    <header class="studio-hero">
+      <img src="/mcp-studio-network.jpg" alt="" class="studio-hero-image" />
+      <div class="studio-hero-copy">
+        <div class="studio-kicker"><Blocks :size="16" /> Model Context Protocol</div>
         <div>
           <div class="studio-title-line">
             <h1>MCP Studio</h1>
@@ -13,23 +14,23 @@
           </div>
           <p>{{ status.transport }} · {{ status.exposedToolCount }} tools · {{ accessLabel }}</p>
         </div>
-      </div>
-      <div class="studio-actions">
-        <button
-          class="icon-button"
-          type="button"
-          title="Refresh MCP status"
-          :disabled="loading"
-          @click="loadStatus"
-        >
-          <RefreshCw :size="17" :class="{ spin: loading }" />
-          <span class="sr-only">Refresh MCP status</span>
-        </button>
-        <button class="primary-button" type="button" :disabled="creating" @click="createTool">
-          <Loader2 v-if="creating" :size="17" class="spin" />
-          <Plus v-else :size="17" />
-          New MCP tool
-        </button>
+        <div class="studio-actions">
+          <button
+            class="icon-button"
+            type="button"
+            title="Refresh MCP status"
+            :disabled="loading"
+            @click="loadStatus"
+          >
+            <RefreshCw :size="17" :class="{ spin: loading }" />
+            <span class="sr-only">Refresh MCP status</span>
+          </button>
+          <button class="primary-button" type="button" :disabled="creating" @click="createTool">
+            <Loader2 v-if="creating" :size="17" class="spin" />
+            <Plus v-else :size="17" />
+            New MCP tool
+          </button>
+        </div>
       </div>
     </header>
 

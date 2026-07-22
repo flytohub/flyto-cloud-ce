@@ -1,18 +1,16 @@
 <template>
   <nav class="sticky top-0 z-50 border-b border-gray-200 bg-white/95 shadow-sm backdrop-blur-md transition-colors duration-200 dark:border-gray-700 dark:bg-gray-900/95">
-    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between gap-3 sm:h-20">
-        <div class="flex min-w-0 items-center gap-5">
-          <router-link to="/" aria-label="Flyto2 Flow" class="group flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3">
-            <img src="/logo.png" alt="Flyto2" class="brand-logo w-auto transition-transform duration-300 group-hover:scale-105" />
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="relative flex h-16 items-center justify-between gap-3 sm:h-20">
+        <router-link to="/" aria-label="Flyto2 Flow" class="group flex shrink-0 items-center gap-2 transition-opacity hover:opacity-80 sm:gap-3">
+          <img src="/logo.png" alt="Flyto2" class="brand-logo w-auto transition-transform duration-300 group-hover:scale-105" />
+        </router-link>
+        <div class="absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 lg:flex" aria-label="Primary navigation">
+          <router-link v-for="item in navigation" :key="item.to" :to="item.to" class="nav-link">
+            <component :is="item.icon" :size="18" />
+            <span>{{ item.label }}</span>
           </router-link>
-          <div class="hidden items-center gap-1 lg:flex" aria-label="Primary navigation">
-            <router-link v-for="item in navigation" :key="item.to" :to="item.to" class="nav-link">
-              <component :is="item.icon" :size="18" />
-              <span>{{ item.label }}</span>
-            </router-link>
-            <slot name="navigation" />
-          </div>
+          <slot name="navigation" />
         </div>
         <div class="flex shrink-0 items-center gap-2">
           <div class="hidden sm:block"><LanguageSwitcher /></div>
@@ -56,7 +54,7 @@ import LanguageSwitcher from '@/components/LanguageSwitcher.vue'
 const menuOpen = ref(false)
 const navigation = [
   { to: '/my-templates', label: 'Workflows', icon: GitBranch },
-  { to: '/mcp', label: 'MCP Studio', icon: Cable },
+  { to: '/mcp', label: 'MCP', icon: Cable },
   { to: '/variables', label: 'Variables', icon: KeyRound },
   { to: '/observability', label: 'Monitor', icon: Activity },
 ]
@@ -79,11 +77,11 @@ const navigation = [
 
 .nav-link { min-height: 2.5rem; padding: 0 0.75rem; }
 .nav-link:hover,
-.nav-link.router-link-active { background: #eef7f5; color: #0f766e; }
+.nav-link.router-link-active { background: #f3f0ff; color: #6d5dfc; }
 .menu-button { justify-content: center; width: 2.75rem; height: 2.75rem; border: 1px solid #d1d5db; }
 .mobile-menu { padding: 0.25rem 0 1rem; }
 .mobile-link { display: flex; min-height: 2.75rem; padding: 0 0.75rem; }
-.mobile-link.router-link-active { background: #eef7f5; color: #0f766e; }
+.mobile-link.router-link-active { background: #f3f0ff; color: #6d5dfc; }
 
 @media (min-width: 1024px) {
   .menu-button,
@@ -96,7 +94,7 @@ const navigation = [
   .menu-button { color: #d1d5db; }
   .nav-link:hover,
   .nav-link.router-link-active,
-  .mobile-link.router-link-active { background: #163d3a; color: #99f6e4; }
+  .mobile-link.router-link-active { background: #302d52; color: #b0a5ff; }
   .menu-button { border-color: #4b5563; }
 }
 </style>
