@@ -1733,7 +1733,7 @@
   },
   "package_name": "flyto-cloud-ce",
   "schema": "flyto.ce-release.v1",
-  "source_commit": "b73e74d9ef3ff37401a4b0be094aafa708767ce1",
+  "source_commit": "ffef989a482315ba2d65ad56b74551b51ea797e8",
   "source_repository": "https://github.com/flytohub/flyto-cloud",
   "tree_sha256": "84e7caf03a6c53cfd8cd96e119c62e0fffc96efdeafea6d95031645b9f1c9bad"
 }
