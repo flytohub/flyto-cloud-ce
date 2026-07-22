@@ -7,12 +7,62 @@ import argparse
 import base64
 import hashlib
 import json
+import os
+import re
+import subprocess
 from pathlib import Path
 from urllib.parse import quote
 
 from packaging.utils import canonicalize_name
 
 from audit_ce_dependencies import _load_overrides, _locked_requirements, _python_dependencies
+
+
+SKIP_TREE_PARTS = {
+    ".git",
+    ".pytest_cache",
+    "__pycache__",
+    "dist",
+    "node_modules",
+    "out",
+}
+
+
+def _release_tree_sha256(root: Path, output_path: Path) -> str:
+    """Hash the stable release inputs without local caches or generated output."""
+    digest = hashlib.sha256()
+    files = sorted(
+        path
+        for path in root.rglob("*")
+        if path.is_file()
+        and path.resolve() != output_path
+        and not SKIP_TREE_PARTS.intersection(path.relative_to(root).parts)
+    )
+    for path in files:
+        relative = path.relative_to(root).as_posix().encode("utf-8")
+        digest.update(len(relative).to_bytes(4, "big"))
+        digest.update(relative)
+        with path.open("rb") as handle:
+            while chunk := handle.read(1024 * 1024):
+                digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _source_commit(root: Path, tree_sha256: str) -> str:
+    """Resolve release provenance without any Cloud-export metadata."""
+    github_sha = os.environ.get("GITHUB_SHA", "").strip()
+    if re.fullmatch(r"[0-9a-fA-F]{40,64}", github_sha):
+        return github_sha.lower()
+    result = subprocess.run(
+        ["git", "-C", str(root), "rev-parse", "HEAD"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    commit = result.stdout.strip()
+    if result.returncode == 0 and re.fullmatch(r"[0-9a-fA-F]{40,64}", commit):
+        return commit.lower()
+    return (tree_sha256 * 2)[:40]
 
 
 def _npm_components(root: Path) -> list[dict]:
@@ -91,7 +141,7 @@ def _python_components(root: Path, *, installed_closure: bool) -> list[dict]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("root", nargs="?", default=".", help="generated CE tree")
+    parser.add_argument("root", nargs="?", default=".", help="Flyto2 Flow release tree")
     parser.add_argument("--output", default="sbom.cdx.json")
     parser.add_argument(
         "--python-installed",
@@ -100,13 +150,18 @@ def main() -> int:
     )
     args = parser.parse_args()
     root = Path(args.root).resolve()
-    release = json.loads((root / "CE_EXPORT.json").read_text(encoding="utf-8"))
+    boundary = json.loads((root / "FLOW_BOUNDARY.json").read_text(encoding="utf-8"))
+    if boundary.get("schema") != "flyto.flow-boundary.v1":
+        raise ValueError("FLOW_BOUNDARY.json has an unsupported schema")
+    output_path = (root / args.output).resolve()
+    tree_sha256 = _release_tree_sha256(root, output_path)
+    source_commit = _source_commit(root, tree_sha256)
     components = _npm_components(root) + _python_components(
         root,
         installed_closure=args.python_installed,
     )
     components.sort(key=lambda item: item["bom-ref"])
-    serial_seed = f"{release['source_commit']}:{release['tree_sha256']}".encode("utf-8")
+    serial_seed = f"{source_commit}:{tree_sha256}".encode("utf-8")
     serial_hex = hashlib.sha256(serial_seed).hexdigest()[:32]
     serial = (
         f"urn:uuid:{serial_hex[:8]}-{serial_hex[8:12]}-4{serial_hex[13:16]}-a{serial_hex[17:20]}-{serial_hex[20:32]}"
@@ -121,11 +176,11 @@ def main() -> int:
                 "type": "application",
                 "bom-ref": "pkg:github/flytohub/flyto-flow",
                 "name": "flyto-flow",
-                "version": release["source_commit"][:12],
+                "version": source_commit[:12],
             },
             "properties": [
-                {"name": "flyto:source_commit", "value": release["source_commit"]},
-                {"name": "flyto:tree_sha256", "value": release["tree_sha256"]},
+                {"name": "flyto:source_commit", "value": source_commit},
+                {"name": "flyto:tree_sha256", "value": tree_sha256},
             ],
         },
         "components": components,
