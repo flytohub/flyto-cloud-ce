@@ -4,7 +4,7 @@
     ".github/CODEOWNERS": "e4481ee7bcc625b98f80533d1993c6a5126cb99990b795829aa5e213e30719b1",
     ".github/dependabot.yml": "ff6f8ba6ffa432d4d49fd48063cedb28516023ef36959763e9b553390090d290",
     ".github/pull_request_template.md": "6997d8fd13374e73677fcc1128c2ca36c2678cad2a4e738ad1faa4416b0841a7",
-    ".github/workflows/ci.yml": "d82f4f2fc81069355ecfcc4549b6bb7a90f42b2a3846141acf637fc8b15b523b",
+    ".github/workflows/ci.yml": "9c9b4c5e68068db67300ee757f0ab657a13a05c556b59d1310726bd3957da9cb",
     ".gitignore": "e685787b414c04207ee883bddb4b5aa9418203d375f55910bf9c2885b0456c69",
     "CODE_OF_CONDUCT.md": "2d01aa65f07e939ab3376b90b4f35590b0f453c7a04b2409924ec342db2eba06",
     "CONTRIBUTING.md": "7232e92a2df04dcea42e96113a45ed366cce3e9af4445dbcf54a8c48042914fb",
@@ -663,8 +663,8 @@
     "src/ui/web/backend/websocket/module_sync.py": "de98e18b0df2fa073d66f2279c57b947e2d22576698a91e0daf7c91f73fdb7d9",
     "src/ui/web/frontend/index.html": "b3589c4d731d14c296a77cd1ef0fc13aa8ec96fc445e60fc6eee50a5cea61107",
     "src/ui/web/frontend/min_backend_version.txt": "71015c979ccb0fc8a0be7ca0ae83046ab045cdc2c8faa09fb2f0f7e440f9b4a6",
-    "src/ui/web/frontend/package-lock.json": "71d8b1440985abb7758d9998b58c458603ce63ff15d33507cad377c214ac54c4",
-    "src/ui/web/frontend/package.json": "3288d862cfbc230853a5ddbf90d90d3e4cfe17637c2c781628a85cf449a0c768",
+    "src/ui/web/frontend/package-lock.json": "339d1f023e1eb1ede77dadcd5fd82ba3d742d0f699a08892fd5438f1bdbaf212",
+    "src/ui/web/frontend/package.json": "af4f9192ef652632701ccf2e46dd1866a2aa486813ea0d6f435096b79a7882d7",
     "src/ui/web/frontend/playwright.config.js": "241cb144e139864a3978a55497940f26cec657f13d1c00f78d98f08ff595add7",
     "src/ui/web/frontend/public/favicon.ico": "cb38cf3859c53fba06227d2bf44758ce5a1431fdda6b96f5fcd54c63ec993352",
     "src/ui/web/frontend/public/flags/au.svg": "2dca728e7e70fffba5efeb1d7f5230f9fad0a4851c5b4daeb187f84f775e845d",
@@ -1728,12 +1728,12 @@
     "src/ui/web/frontend/tests/unit/utils/validators.spec.js": "a0646af90bdc79c3efd43b690f5e8fdbe89672039403b56c4e875bafbbfeeda1",
     "src/ui/web/frontend/uno.config.js": "87b2e85e9ade642f9cb0428a171219f031836dd1037ba04c3fd2198c66c3e9d4",
     "src/ui/web/frontend/vite.config.js": "0111ded498675d23477ebf0c2fb0e2e3ede7451d64f0d94a1e654ac6c3deb7e4",
-    "src/ui/web/frontend/vitest.config.js": "d0c80056d91f8a192e57769d989c921f440493d32b28378caa264ee6e3d49787",
+    "src/ui/web/frontend/vitest.config.js": "9bf201873215710bc6aa749529fa93c68457302b111daab9652df9f827d662ec",
     "tests/ce/test_release.py": "0403af01c79487188034a2b8c2b14522a5f812149cda5aa659807fd9ff7cc98d"
   },
   "package_name": "flyto-cloud-ce",
   "schema": "flyto.ce-release.v1",
-  "source_commit": "a06a54d565d266f052596003e12994413c597ede",
+  "source_commit": "b73e74d9ef3ff37401a4b0be094aafa708767ce1",
   "source_repository": "https://github.com/flytohub/flyto-cloud",
-  "tree_sha256": "656d4424d3f02aa03cc054212c879a59886335ad183e751d7df8584cdf5e5dcf"
+  "tree_sha256": "84e7caf03a6c53cfd8cd96e119c62e0fffc96efdeafea6d95031645b9f1c9bad"
 }
