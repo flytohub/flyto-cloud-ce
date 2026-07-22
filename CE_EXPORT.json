@@ -65,7 +65,7 @@
     "src/ui/web/backend/api/config/modules.py": "73b5b5a927940e5628e55ebc9839ed9b35d28621eb2a6b9914e462d91242559b",
     "src/ui/web/backend/api/config/ui.py": "28f35eee29af51a4ace3a99b8180e56b8b45364690f85067c692a172f10c75c7",
     "src/ui/web/backend/api/content/__init__.py": "23f6de62d7f0d2c95e1defd6b7e20435c12113f293c6b9c8fd504adc1d70595a",
-    "src/ui/web/backend/api/content/i18n.py": "c6a3dceabab636e7f2a428482c1edf9629c03f9c8893d97454048885dae4b678",
+    "src/ui/web/backend/api/content/i18n.py": "f103e8cc6d645f0294497fe94dfe7a758d47ee562bc53e2c9d1d11bfbac536d8",
     "src/ui/web/backend/api/content/translation_reviews.py": "d61146f423a5249939b1e1ca157fb4ee7fb9072f0627a1b41c9f35f35cf865b1",
     "src/ui/web/backend/api/content/translations/__init__.py": "5dab253c344dd77378d3fb22d95944e2ffdddf54a8be66d32f070f5bcbc98faa",
     "src/ui/web/backend/api/content/translations/deps.py": "eda9aa94878a175eaaa0227767fca6769381ba69b088f51c7e61ff3117a9a181",
@@ -88,7 +88,7 @@
     "src/ui/web/backend/api/engine/routes.py": "c0f515c728827b574e2668e0e2f5438820093d88759cafdfc7dadd758e06ba62",
     "src/ui/web/backend/api/errors.py": "878a2a4873ac4efb7b967ca0c0073126d1e9f4a38e1517cb95355ac04df2fae9",
     "src/ui/web/backend/api/evidence/__init__.py": "6fe85baace34c1e044ea154ef7b88f95c5f5da36d9fde5ce1025936a939ec522",
-    "src/ui/web/backend/api/evidence/routes.py": "a2031e0a498d12f7ac21c4a977bdb0b67f2e07f885a39130aadbebd5ee0091ef",
+    "src/ui/web/backend/api/evidence/routes.py": "1cb032790d140473c97d7f042591210a31ffcec13a78453df05dd09eaa9400d6",
     "src/ui/web/backend/api/executions/__init__.py": "a31e78194444c69de41d484bdb58268af2f06fc0995443eac51e6f56dd8cdc5d",
     "src/ui/web/backend/api/executions/auth.py": "5d7c9de50bb3fae1c02e312e9715778723756e86a287661d4a006ea4108a91a6",
     "src/ui/web/backend/api/executions/models.py": "bce6e934d8744b6db736c51857b99e8fa5c3f6cd420998d17a8f28f820b58d93",
@@ -1733,7 +1733,7 @@
   },
   "package_name": "flyto-cloud-ce",
   "schema": "flyto.ce-release.v1",
-  "source_commit": "b297dfb82f3330aeae6ec0b00a4ee09e0d97f11b",
-  "source_repository": "https://github.com/flytohub/flyto-cloud",
-  "tree_sha256": "1d82c29fb350fcaf2c0ed4ca456611d1675d6fdeb0dd08f588e29ebef5311fa1"
+  "source_commit": "4d0455b659991aeee27a4d59ca9baef4576b0d5c",
+  "source_repository": "https://github.com/flytohub/flyto-cloud.git",
+  "tree_sha256": "58263f3657b4ca43599d212e7f3bc9854830e44d7b4ceaa9993988526eb19ac3"
 }

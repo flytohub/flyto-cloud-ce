@@ -62,15 +62,27 @@ def _validate_evidence_component(value: object, label: str) -> str:
     return value
 
 
+def _find_child(parent: Path, expected_name: str) -> Path | None:
+    """Return a contained filesystem entry selected from an allowed directory."""
+    try:
+        for candidate in parent.iterdir():
+            if candidate.name != expected_name:
+                continue
+            resolved = candidate.resolve()
+            resolved.relative_to(parent.resolve())
+            return resolved
+    except (OSError, ValueError):
+        return None
+    return None
+
+
 def _get_execution_dir(evidence_path: Path, execution_id: str) -> tuple[Path, str]:
     """Resolve an execution directory without allowing traversal or symlink escape."""
     safe_execution_id = _validate_evidence_component(execution_id, "execution id")
     evidence_root = evidence_path.resolve()
-    execution_dir = (evidence_root / safe_execution_id).resolve()
-    try:
-        execution_dir.relative_to(evidence_root)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail="Invalid execution id") from exc
+    execution_dir = _find_child(evidence_root, safe_execution_id)
+    if execution_dir is None or not execution_dir.is_dir():
+        raise HTTPException(status_code=404, detail="Execution not found")
     return execution_dir, safe_execution_id
 
 
@@ -139,12 +151,18 @@ async def list_executions(
 
     # Get all execution directories
     executions = []
-    for exec_dir in evidence_path.iterdir():
-        if not exec_dir.is_dir():
+    evidence_root = evidence_path.resolve()
+    for entry in evidence_root.iterdir():
+        if not entry.is_dir():
+            continue
+        try:
+            exec_dir = entry.resolve()
+            exec_dir.relative_to(evidence_root)
+        except (OSError, ValueError):
             continue
 
-        jsonl_path = exec_dir / "evidence.jsonl"
-        if not jsonl_path.exists():
+        jsonl_path = _find_child(exec_dir, "evidence.jsonl")
+        if jsonl_path is None or not jsonl_path.is_file():
             continue
 
         # Read evidence summary
@@ -221,8 +239,8 @@ async def get_execution_evidence(
     if not exec_dir.exists():
         raise HTTPException(status_code=404, detail="Execution not found")
 
-    jsonl_path = exec_dir / "evidence.jsonl"
-    if not jsonl_path.exists():
+    jsonl_path = _find_child(exec_dir, "evidence.jsonl")
+    if jsonl_path is None or not jsonl_path.is_file():
         raise HTTPException(status_code=404, detail="No evidence found for execution")
 
     steps = []
@@ -245,8 +263,8 @@ async def get_execution_evidence(
                     )
 
                     # Check for screenshot/DOM files
-                    has_screenshot = (exec_dir / f"{step_id}.png").exists()
-                    has_dom = (exec_dir / f"{step_id}.html").exists()
+                    has_screenshot = _find_child(exec_dir, f"{step_id}.png") is not None
+                    has_dom = _find_child(exec_dir, f"{step_id}.html") is not None
 
                     step = StepEvidenceResponse(
                         step_id=step_id,
@@ -303,9 +321,9 @@ async def get_step_evidence(
     evidence_path = get_evidence_path()
     exec_dir, safe_execution_id = _get_execution_dir(evidence_path, execution_id)
     safe_step_id = _validate_evidence_component(step_id, "step id")
-    jsonl_path = exec_dir / "evidence.jsonl"
+    jsonl_path = _find_child(exec_dir, "evidence.jsonl")
 
-    if not jsonl_path.exists():
+    if jsonl_path is None or not jsonl_path.is_file():
         raise HTTPException(status_code=404, detail="Execution not found")
 
     # Find the specific step
@@ -325,8 +343,8 @@ async def get_step_evidence(
                             data.pop('context_after', None)
 
                         # Add file availability info
-                        data['has_screenshot'] = (exec_dir / f"{safe_step_id}.png").exists()
-                        data['has_dom_snapshot'] = (exec_dir / f"{safe_step_id}.html").exists()
+                        data['has_screenshot'] = _find_child(exec_dir, f"{safe_step_id}.png") is not None
+                        data['has_dom_snapshot'] = _find_child(exec_dir, f"{safe_step_id}.html") is not None
 
                         return data
 
@@ -353,9 +371,9 @@ async def get_step_screenshot(
     evidence_path = get_evidence_path()
     exec_dir, safe_execution_id = _get_execution_dir(evidence_path, execution_id)
     safe_step_id = _validate_evidence_component(step_id, "step id")
-    screenshot_path = exec_dir / f"{safe_step_id}.png"
+    screenshot_path = _find_child(exec_dir, f"{safe_step_id}.png")
 
-    if not screenshot_path.exists():
+    if screenshot_path is None or not screenshot_path.is_file():
         raise HTTPException(status_code=404, detail="Screenshot not found")
 
     return FileResponse(
@@ -378,9 +396,9 @@ async def get_step_dom(
     evidence_path = get_evidence_path()
     exec_dir, _ = _get_execution_dir(evidence_path, execution_id)
     safe_step_id = _validate_evidence_component(step_id, "step id")
-    dom_path = exec_dir / f"{safe_step_id}.html"
+    dom_path = _find_child(exec_dir, f"{safe_step_id}.html")
 
-    if not dom_path.exists():
+    if dom_path is None or not dom_path.is_file():
         raise HTTPException(status_code=404, detail="DOM snapshot not found")
 
     try:
@@ -434,9 +452,9 @@ async def get_context_diff(
     evidence_path = get_evidence_path()
     exec_dir, _ = _get_execution_dir(evidence_path, execution_id)
     safe_step_id = _validate_evidence_component(step_id, "step id")
-    jsonl_path = exec_dir / "evidence.jsonl"
+    jsonl_path = _find_child(exec_dir, "evidence.jsonl")
 
-    if not jsonl_path.exists():
+    if jsonl_path is None or not jsonl_path.is_file():
         raise HTTPException(status_code=404, detail="Execution not found")
 
     try:
