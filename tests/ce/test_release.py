@@ -528,6 +528,38 @@ def test_docker_image_bundles_complete_runtime():
     assert "chown -r appuser:appuser /data /app /home/appuser" in body
 
 
+def test_container_release_is_verified_before_docker_hub_publish():
+    workflow = (
+        ROOT / ".github/workflows/publish-image.yml"
+    ).read_text(encoding="utf-8")
+
+    assert 'IMAGE_NAME: docker.io/flyto2/flow' in workflow
+    assert "workflow_dispatch" not in workflow
+    assert '- "v*.*.*"' in workflow
+    assert "Release tags must match vMAJOR.MINOR.PATCH." in workflow
+    assert "DOCKERHUB_TOKEN" in workflow
+    assert "provenance: mode=max" in workflow
+    assert "sbom: true" in workflow
+    assert workflow.index("Verify release candidate") < workflow.index(
+        "Log in to Docker Hub"
+    )
+    assert workflow.index("Scan release candidate") < workflow.index(
+        "Log in to Docker Hub"
+    )
+
+
+def test_published_image_is_the_documented_quick_start():
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    guide = (ROOT / "docs/getting-started.md").read_text(encoding="utf-8")
+
+    for document in (readme, guide):
+        assert "docker.io/flyto2/flow:0.1.0" in document
+        assert "--publish 127.0.0.1:9000:9000" in document
+        assert "--volume flyto-flow-data:/data/flyto" in document
+
+    assert (ROOT / "docs/assets/workflow-builder.jpg").is_file()
+
+
 def test_dark_mode_scoped_selectors_use_descendant_global_form():
     sources = (
         "src/ui/web/frontend/src/components/common/LoadingButton.vue",

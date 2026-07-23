@@ -1,28 +1,35 @@
 # Getting Started
 
-This guide takes a new operator from clone to a locally callable MCP workflow
-tool. Commands assume the repository root as the current directory.
+This guide takes a new operator from a published container image to a locally
+callable MCP workflow tool.
 
 ## Prerequisites
 
-- Git
-- Docker Engine or Docker Desktop with Compose support
+- Docker Engine or Docker Desktop
 - enough local storage for the application image, Chromium, and workflow data
 
-Python 3.12 and Node.js 20 are required only for direct development.
+Git, Docker Compose, Python 3.12, and Node.js 20 are required only when building
+or developing from source.
 
 ## 1. Start the Local Application
 
-Create the local environment file from the reviewed example:
+Pull the reviewed release:
 
 ```bash
-cp install/.env.ce.example install/.env.ce
+docker pull docker.io/flyto2/flow:0.1.0
 ```
 
-Build and start the baseline:
+Start Flow on the loopback interface with persistent local storage:
 
 ```bash
-docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml up --build
+docker run --detach \
+  --name flyto-flow \
+  --init \
+  --restart unless-stopped \
+  --shm-size=1g \
+  --publish 127.0.0.1:9000:9000 \
+  --volume flyto-flow-data:/data/flyto \
+  docker.io/flyto2/flow:0.1.0
 ```
 
 Open <http://127.0.0.1:9000>. The default configuration publishes the service
@@ -82,17 +89,17 @@ Streamable HTTP examples.
 Stop the application:
 
 ```bash
-docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml down
+docker stop flyto-flow
 ```
 
-Start it again without rebuilding:
+Start it again:
 
 ```bash
-docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml up
+docker start flyto-flow
 ```
 
-Do not add `--volumes` unless the local workspace is intentionally being
-deleted.
+Do not remove the `flyto-flow-data` volume unless the local workspace is
+intentionally being deleted.
 
 ## Back Up Local Data
 
@@ -104,9 +111,31 @@ environment before relying on it.
 At minimum, retain:
 
 - the exact application revision or image digest;
-- the reviewed environment file without publishing its secrets;
+- any reviewed environment configuration without publishing its secrets;
 - the complete application data volume;
 - the active `flyto-core` artifact version and trusted digest.
+
+## Update Flow
+
+Read the release notes and pull the next exact version. Stop and replace the
+container while retaining the named data volume:
+
+```bash
+docker pull docker.io/flyto2/flow:<version>
+docker stop flyto-flow
+docker rm flyto-flow
+docker run --detach \
+  --name flyto-flow \
+  --init \
+  --restart unless-stopped \
+  --shm-size=1g \
+  --publish 127.0.0.1:9000:9000 \
+  --volume flyto-flow-data:/data/flyto \
+  docker.io/flyto2/flow:<version>
+```
+
+Use the digest published by the release workflow when an environment requires
+an immutable deployment reference.
 
 ## Update `flyto-core` Offline
 
@@ -121,6 +150,19 @@ curl -X POST http://127.0.0.1:9000/api/core/upload \
 
 The importer does not invoke `pip` or contact PyPI. Restart the application
 after a successful activation so every worker uses the same runtime.
+
+## Build from Source
+
+Clone the repository, create the reviewed local environment file, and build the
+same Dockerfile used by the release workflow:
+
+```bash
+cp install/.env.ce.example install/.env.ce
+docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml up --build
+```
+
+The Compose deployment uses the same loopback port and
+`flyto-flow-data` volume as the published-image command.
 
 ## Direct Development
 
