@@ -310,6 +310,42 @@ async def test_workflow_run_actually_copies_a_file():
 
 
 @pytest.mark.asyncio
+async def test_workflow_run_actually_converts_json_to_csv():
+    from main_offline import app
+
+    output = Path("ce_release_test_output.csv")
+    workflow_yaml = (
+        "name: JSON to CSV Test\n"
+        "steps:\n"
+        "  - id: convert\n"
+        "    module: data.json_to_csv\n"
+        "    label: JSON to CSV\n"
+        "    params:\n"
+        "      input_data: ${records}\n"
+        f"      output_path: {output.name}\n"
+        "      include_header: true\n"
+        "      flatten_nested: true\n"
+        "    order_index: 0\n"
+    )
+
+    try:
+        transport = httpx.ASGITransport(app=app)
+        async with httpx.AsyncClient(transport=transport, base_url="http://test") as client:
+            execution = await _run_and_wait(
+                client,
+                workflow_yaml,
+                {"records": [{"name": "Alice", "age": 30}, {"name": "Bob", "age": 25}]},
+            )
+
+        assert execution["status"] == "completed", execution.get("error")
+        rows = output.read_text(encoding="utf-8").strip().splitlines()
+        assert rows[0] == "age,name"
+        assert set(rows[1:]) == {"30,Alice", "25,Bob"}
+    finally:
+        output.unlink(missing_ok=True)
+
+
+@pytest.mark.asyncio
 async def test_nested_execution_modules_are_denied_by_default():
     """flow.invoke / flow.subflow are real "run arbitrary nested workflow"
     gadgets in flyto-core, but flyto-core's stub flow.subflow implementation
@@ -387,9 +423,13 @@ async def test_first_run_starter_template_seed_is_idempotent():
         page=1,
         page_size=20,
     )
-    assert templates.total == 2
+    assert templates.total == 3
     starters = {template.name: template for template in templates.items}
-    assert set(starters) == {"HTTP GET Request Tool", "Browser Screenshot Tool"}
+    assert set(starters) == {
+        "HTTP GET Request Tool",
+        "Browser Screenshot Tool",
+        "JSON to CSV Tool",
+    }
 
     http_starter = starters["HTTP GET Request Tool"]
     assert http_starter.steps[0]["module"] == "flow.trigger"
@@ -405,6 +445,11 @@ async def test_first_run_starter_template_seed_is_idempotent():
         "browser.screenshot",
         "browser.close",
     ]
+
+    csv_starter = starters["JSON to CSV Tool"]
+    assert csv_starter.steps[0]["module"] == "flow.trigger"
+    assert csv_starter.steps[0]["params"]["trigger_type"] == "mcp"
+    assert csv_starter.steps[1]["module"] == "data.json_to_csv"
 
 
 @pytest.mark.asyncio

@@ -163,6 +163,55 @@ _STARTER_TEMPLATES = [
         ],
         "ui": {"components": [], "sections": [], "viewport": {"x": 0, "y": 0, "zoom": 1}},
     },
+    {
+        "name": "JSON to CSV Tool",
+        "description": (
+            "Starter template: expose a JSON-to-CSV converter as a callable "
+            "MCP tool. Pass an array of records, get back a CSV file."
+        ),
+        "category": "general",
+        "tags": ["starter", "data", "csv"],
+        "steps": [
+            {
+                "id": "trigger",
+                "module": "flow.trigger",
+                "label": "MCP Trigger",
+                "params": {
+                    "trigger_type": "mcp",
+                    "tool_name": "json_to_csv_tool",
+                    "tool_description": "Convert a JSON array of records into a CSV file.",
+                    "config": {
+                        "input_fields": [
+                            {
+                                "name": "records",
+                                "type": "array",
+                                "description": "Array of JSON objects to convert to CSV",
+                                "required": True,
+                            }
+                        ]
+                    },
+                },
+                "position_x": 100,
+                "position_y": 150,
+                "order_index": 0,
+            },
+            {
+                "id": "convert",
+                "module": "data.json_to_csv",
+                "label": "JSON to CSV",
+                "params": {
+                    "input_data": "${records}",
+                    "output_path": "csv_output.csv",
+                    "include_header": True,
+                    "flatten_nested": True,
+                },
+                "position_x": 400,
+                "position_y": 150,
+                "order_index": 1,
+            },
+        ],
+        "ui": {"components": [], "sections": [], "viewport": {"x": 0, "y": 0, "zoom": 1}},
+    },
 ]
 
 
