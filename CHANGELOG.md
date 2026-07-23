@@ -25,8 +25,9 @@ recorded here. Historical Apache-2.0 revisions remain governed by
 - Additive MCP metadata for source workflows, contract versions, fingerprints,
   risk levels, approval policies, and evidence references.
 - Repository-level guidance for contributors and coding agents.
-- Idempotent first-run HTTP GET MCP starter workflow for empty local
-  workspaces.
+- Idempotent first-run HTTP GET, browser screenshot, and JSON-to-CSV MCP
+  starter workflows for empty local workspaces, with maintained contracts and
+  operator guidance.
 
 ### Changed
 

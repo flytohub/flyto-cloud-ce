@@ -36,6 +36,10 @@ curl --fail http://127.0.0.1:9000/api/health
 
 ## 2. Create a Workflow-Backed Tool
 
+On a first run with an empty template library, Flow creates HTTP GET, browser
+screenshot, and JSON-to-CSV starters. Open **Templates** to inspect or adapt
+one, or follow these steps to create a focused tool from scratch:
+
 1. Open **MCP Studio** from the primary navigation.
 2. Select **New tool**. Flow creates a starter workflow with an MCP trigger.
 3. Select **Edit workflow**.
@@ -48,6 +52,8 @@ curl --fail http://127.0.0.1:9000/api/health
 
 A focused tool is easier for an agent to select and safer for an operator to
 review. Prefer `collect_release_notes` over a vague name such as `automation`.
+The [starter template guide](starter-templates.md) documents each seeded
+contract, default, output, and network boundary.
 
 ## 3. Test the Tool in MCP Studio
 

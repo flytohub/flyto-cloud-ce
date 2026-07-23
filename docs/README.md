@@ -1,26 +1,36 @@
 # Flyto2 Flow Documentation
 
-Start with the document that matches the task:
+Choose the shortest path for the task at hand.
+
+## Start And Build
 
 - [Getting started](getting-started.md): install, first MCP tool, backup,
   update, and verification.
-- [Feature reference](FEATURES.md): implemented product surfaces, source
-  ownership, limits, and verification.
+- [First-run starter templates](starter-templates.md): HTTP, browser
+  screenshot, and JSON-to-CSV examples with typed inputs and safety notes.
 - [MCP Studio](mcp-studio.md): workflow-backed tool discovery, schema, client
   setup, access control, and evidence.
 - [Use cases](use-cases.md): practical browser, API, document, and approval
   workflows.
-- [CE and Cloud boundary](ce-cloud-boundary.md): hosted features excluded from
-  the local baseline.
+
+## Operate And Verify
+
+- [Feature reference](FEATURES.md): implemented product surfaces, source
+  ownership, limits, and verification.
+- [Versioning and compatibility](versioning-and-compatibility.md): stored-data,
+  API, and workflow compatibility.
 - [Flow and Cloud synchronization](flow-cloud-sync.md): complete shared-file
   allowlist and ownership rules.
 - [Connection injection contract](architecture/connection-injection-contract.md):
   shared external-connection ports, deployment adapters, security invariants,
   and extension rules.
+
+## Understand The Product Boundary
+
+- [CE and Cloud boundary](ce-cloud-boundary.md): hosted features excluded from
+  the local baseline.
 - [Edition matrix](edition-matrix.md): source-available and hosted product
   responsibilities.
-- [Versioning and compatibility](versioning-and-compatibility.md): stored-data,
-  API, and workflow compatibility.
 - [Licensing strategy](licensing-strategy.md): current and historical license
   boundaries.
 - [Open-core model](open-core.md): product architecture and commercial

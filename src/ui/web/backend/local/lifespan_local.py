@@ -8,6 +8,7 @@ logger = logging.getLogger(__name__)
 
 
 def cleanup_stale_browser_locks() -> None:
+    """Remove Chromium singleton files left by an interrupted local run."""
     profile = Path.home() / ".flyto" / "chrome-profile"
     if not profile.exists():
         return
@@ -21,6 +22,7 @@ def cleanup_stale_browser_locks() -> None:
 
 
 async def init_capabilities() -> None:
+    """Initialize the local capability context once during application startup."""
     from capabilities import auto_init_context, has_capability_context
 
     if not has_capability_context():
@@ -28,6 +30,7 @@ async def init_capabilities() -> None:
 
 
 def init_breakpoint_manager() -> None:
+    """Initialize optional breakpoint support without blocking local startup."""
     try:
         from services.breakpoint_setup import setup_breakpoint_manager
 

@@ -26,6 +26,18 @@ default deployment binds to loopback and does not require hosted identity.
 - Architecture: [`ARCHITECTURE.md`](../ARCHITECTURE.md)
 - Verification: `python -m pytest -q tests/ce` and CE purity checks
 
+## First-Run Starter Library
+
+An empty template library receives three idempotently seeded examples: an HTTP
+GET MCP tool, a headless-browser screenshot MCP tool, and a JSON-to-CSV MCP
+tool. Startup never inserts or changes starters when any saved template already
+exists.
+
+- Contracts and safety notes: [First-run starter templates](starter-templates.md)
+- Source: `src/ui/web/backend/local/lifespan_local.py`
+- Verification:
+  `tests/ce/test_release.py::test_first_run_starter_template_seed_is_idempotent`
+
 ## Flyto2 Core Execution
 
 Workflow execution is delegated to the installed `flyto-core` package. Flow
