@@ -44,6 +44,8 @@ jobs:
           ref: 6769a3f2d9333784d2a8ca2acc025617aa4a4990
           path: .audit-tools/flyto-indexer
       - run: pip install packaging ruff==0.15.15 './.audit-tools/flyto-indexer'
+      - name: Test Flow/Cloud synchronization contract
+        run: python -m unittest discover -s tests -p 'test_flow_cloud_sync_contract.py'
       - run: python scripts/check-ce-purity.py .
       - run: python scripts/check_license_policy.py .
       - run: python scripts/audit_ce_dependencies.py .

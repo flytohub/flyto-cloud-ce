@@ -11,5 +11,7 @@
 /.github/workflows/notify-cloud-sync.yml @flytohub/platform
 /.github/ @flytohub/platform
 /scripts/check-ce-purity.py @flytohub/platform
+/scripts/validate_flow_cloud_contract.py @flytohub/platform
 /scripts/check_license_policy.py @flytohub/platform
 /scripts/check_contribution_terms.py @flytohub/platform
+/tests/test_flow_cloud_sync_contract.py @flytohub/platform

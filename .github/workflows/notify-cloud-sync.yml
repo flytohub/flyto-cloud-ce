@@ -17,9 +17,26 @@ jobs:
     name: Request guarded Cloud sync
     runs-on: ubuntu-latest
     steps:
-      - name: Dispatch Flow update
+      - name: Check out immutable Flow source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Validate and bind synchronization contract
+        id: contract
+        env:
+          FLOW_SOURCE_SHA: ${{ github.sha }}
+        run: |
+          python scripts/validate_flow_cloud_contract.py \
+            --root . \
+            --source-repository flytohub/flyto-flow \
+            --source-sha "$FLOW_SOURCE_SHA" \
+            --github-output "$GITHUB_OUTPUT"
+
+      - name: Dispatch immutable Flow update
         env:
           GH_TOKEN: ${{ secrets.FLOW_SYNC_TOKEN }}
+          FLOW_SOURCE_SHA: ${{ github.sha }}
+          MANIFEST_SHA256: ${{ steps.contract.outputs.manifest_sha256 }}
+          CONTRACT_VERSION: ${{ steps.contract.outputs.contract_version }}
         shell: bash
         run: |
           set -euo pipefail
@@ -27,5 +44,24 @@ jobs:
             echo "::notice::FLOW_SYNC_TOKEN is not configured; Cloud's scheduled pull remains the fallback"
             exit 0
           fi
-          gh api --method POST repos/flytohub/flyto-cloud/dispatches \
-            -f event_type=flow-shared-updated
+          [[ "$FLOW_SOURCE_SHA" =~ ^[0-9a-f]{40}$ ]] || {
+            echo "::error::Flow source is not an immutable commit SHA"
+            exit 1
+          }
+          [[ "$MANIFEST_SHA256" =~ ^[0-9a-f]{64}$ ]] || {
+            echo "::error::Flow manifest digest is invalid"
+            exit 1
+          }
+          payload="$(jq -cn \
+            --arg source_sha "$FLOW_SOURCE_SHA" \
+            --arg manifest_sha256 "$MANIFEST_SHA256" \
+            --argjson contract_version "$CONTRACT_VERSION" \
+            '{
+              event_type: "flow-shared-updated",
+              client_payload: {
+                source_sha: $source_sha,
+                manifest_sha256: $manifest_sha256,
+                contract_version: $contract_version
+              }
+            }')"
+          gh api --method POST repos/flytohub/flyto-cloud/dispatches --input - <<<"$payload"

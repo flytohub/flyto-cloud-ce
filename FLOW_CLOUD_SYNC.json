@@ -1,12 +1,31 @@
 {
-  "schema": "flyto.flow-cloud-sync.v1",
+  "schema": "flyto.flow-cloud-sync.v2",
   "flow_repository": "flytohub/flyto-flow",
   "cloud_repository": "flytohub/flyto-cloud",
   "mode": "guarded-bidirectional-pull-request",
   "canonical_baseline": "flytohub/flyto-flow",
   "cloud_backports": "allowlisted-shared-files-only",
+  "contract": {
+    "version": 2,
+    "manifest_policy": "byte-identical",
+    "source_ref_policy": "immutable-commit-sha",
+    "target_ref_policy": "immutable-commit-sha",
+    "path_policy": "exact-file-allowlist",
+    "candidate_diff_policy": "exact-selected-paths",
+    "change_unit": "pull-request",
+    "conflict_policy": "fail-closed",
+    "provenance_fields": [
+      "source_repository",
+      "source_sha",
+      "source_manifest_sha256",
+      "target_repository",
+      "target_sha",
+      "contract_version"
+    ]
+  },
   "shared_paths": [
     "FLOW_CLOUD_SYNC.json",
+    "scripts/validate_flow_cloud_contract.py",
     "src/ui/web/frontend/src/api/mcp.js",
     "src/ui/web/frontend/src/components/workflowCanvas/CanvasControls.vue",
     "src/ui/web/frontend/src/components/workflowCanvas/CaseSelectorModal.vue",
@@ -39,26 +58,39 @@
     "src/ui/web/frontend/src/styles/vueflow-overrides.css",
     "src/ui/web/frontend/src/views/MCPStudio.vue",
     "src/ui/web/frontend/tests/unit/api/mcp.spec.js",
-    "src/ui/web/frontend/tests/unit/features/mcp/studioModel.spec.js"
+    "src/ui/web/frontend/tests/unit/features/mcp/studioModel.spec.js",
+    "tests/test_flow_cloud_sync_contract.py"
   ],
   "forbidden_cloud_to_flow_markers": [
-    "firebase",
-    "firestore",
-    "stripe",
     "/api/auth",
     "billing",
     "collaboration",
+    "firebase",
+    "firestore",
     "marketplace",
     "organizationstore",
+    "stripe",
     "telemetry",
     "userstore"
   ],
-  "required_flow_gates": [
-    "Flyto2 Flow Verify / Boundary and inventory",
-    "Flyto2 Flow Verify / Backend CE smoke",
-    "Flyto2 Flow Verify / Frontend CE build",
-    "CodeQL"
-  ],
+  "required_gates": {
+    "flow": [
+      "Flyto2 Flow Verify / Boundary and inventory",
+      "Flyto2 Flow Verify / Backend CE smoke",
+      "Flyto2 Flow Verify / Frontend CE build",
+      "Flyto2 Flow Verify / CE container",
+      "CodeQL"
+    ],
+    "cloud": [
+      "Tests",
+      "Security",
+      "Command Risk",
+      "Branding Policy",
+      "Audit Closure",
+      "Validate Flyto2 Flow Sync Contract / Shared surface contract",
+      "CodeQL"
+    ]
+  },
   "license_policy": {
     "flow": "PolyForm-Shield-1.0.0",
     "cloud": "Flyto2-Source-Available-1.1",
