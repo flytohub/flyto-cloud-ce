@@ -29,11 +29,13 @@ REQUIRED_FILES = (
     "docs/FEATURES.md",
     "docs/documentation-manifest.json",
     "docs/getting-started.md",
+    "docs/starter-templates.md",
     "docs/mcp-studio.md",
     "docs/use-cases.md",
     "docs/ce-cloud-boundary.md",
     "docs/flow-cloud-sync.md",
     "docs/edition-matrix.md",
+    "install/README.md",
     "src/README.md",
     "scripts/README.md",
     "tests/README.md",
@@ -51,12 +53,26 @@ README_MARKERS = (
     "# Flyto2 Flow",
     "## Quick Start",
     "## Usage",
+    "## First-Run Starters",
     "## Why Flyto2 Flow",
     "## MCP Studio",
+    "## API",
+    "## Configuration",
     "## Local Means Local",
+    "## Testing",
     "## Contributing",
     "## License and Trademark",
 )
+
+DOCUMENT_MARKERS = {
+    "docs/starter-templates.md": (
+        "# First-Run Starter Templates",
+        "HTTP GET Request Tool",
+        "Browser Screenshot Tool",
+        "JSON to CSV Tool",
+        "tests/ce/test_release.py::test_first_run_starter_template_seed_is_idempotent",
+    ),
+}
 
 MARKDOWN_LINK = re.compile(r"!?\[[^\]]*\]\(([^)]+)\)")
 EMAIL = re.compile(r"[A-Za-z0-9._%+-]+@([A-Za-z0-9.-]+\.[A-Za-z]{2,})")
@@ -78,6 +94,7 @@ IGNORED_DIRS = {
 
 
 def public_text_files(root: Path) -> list[Path]:
+    """Return maintained Markdown and YAML files outside generated dependencies."""
     files: list[Path] = []
     for current, directories, names in os.walk(root):
         directories[:] = [
@@ -95,10 +112,12 @@ def public_text_files(root: Path) -> list[Path]:
 
 
 def check_required_files(root: Path) -> list[str]:
+    """Report required public documentation files that are absent."""
     return [f"missing required documentation: {name}" for name in REQUIRED_FILES if not (root / name).is_file()]
 
 
 def check_readme_contract(root: Path) -> list[str]:
+    """Report required README sections that are absent."""
     readme = root / "README.md"
     if not readme.is_file():
         return []
@@ -106,7 +125,24 @@ def check_readme_contract(root: Path) -> list[str]:
     return [f"README.md is missing required section: {marker}" for marker in README_MARKERS if marker not in text]
 
 
+def check_document_markers(root: Path) -> list[str]:
+    """Report feature-contract markers missing from their maintained guides."""
+    errors: list[str] = []
+    for relative_path, markers in DOCUMENT_MARKERS.items():
+        document = root / relative_path
+        if not document.is_file():
+            continue
+        text = document.read_text(encoding="utf-8")
+        errors.extend(
+            f"{relative_path} is missing required content: {marker}"
+            for marker in markers
+            if marker not in text
+        )
+    return errors
+
+
 def _local_link_target(source: Path, raw_target: str) -> Path | None:
+    """Resolve a Markdown target when it refers to a local path."""
     target = raw_target.strip()
     if target.startswith("<") and target.endswith(">"):
         target = target[1:-1]
@@ -122,6 +158,7 @@ def _local_link_target(source: Path, raw_target: str) -> Path | None:
 
 
 def check_markdown_links(root: Path) -> list[str]:
+    """Report broken relative links in maintained Markdown files."""
     errors: list[str] = []
     for source in (path for path in public_text_files(root) if path.suffix.lower() == ".md"):
         text = source.read_text(encoding="utf-8")
@@ -134,6 +171,7 @@ def check_markdown_links(root: Path) -> list[str]:
 
 
 def check_email_domains(root: Path) -> list[str]:
+    """Report public contact addresses outside the flyto2.com domain."""
     errors: list[str] = []
     for source in public_text_files(root):
         text = source.read_text(encoding="utf-8")
@@ -145,6 +183,7 @@ def check_email_domains(root: Path) -> list[str]:
 
 
 def check_brand_name(root: Path) -> list[str]:
+    """Report stale standalone Flyto branding in maintained text files."""
     errors: list[str] = []
     for source in public_text_files(root):
         for line_number, line in enumerate(source.read_text(encoding="utf-8").splitlines(), start=1):
@@ -155,10 +194,12 @@ def check_brand_name(root: Path) -> list[str]:
 
 
 def check_repository(root: Path) -> list[str]:
+    """Run the complete public documentation contract."""
     root = root.resolve()
     return [
         *check_required_files(root),
         *check_readme_contract(root),
+        *check_document_markers(root),
         *check_markdown_links(root),
         *check_email_domains(root),
         *check_brand_name(root),
@@ -166,6 +207,7 @@ def check_repository(root: Path) -> list[str]:
 
 
 def main() -> int:
+    """Run the documentation contract from the command line."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("root", nargs="?", default=".", type=Path)
     args = parser.parse_args()

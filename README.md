@@ -57,6 +57,22 @@ Open <http://127.0.0.1:9000>. Data is stored in the
 The complete install, verification, backup, and exposure guidance is in
 [Getting Started](docs/getting-started.md).
 
+## First-Run Starters
+
+An empty local workspace receives three editable templates:
+
+| Starter | Typed input | Result |
+| --- | --- | --- |
+| HTTP GET Request Tool | `url` | HTTP response |
+| Browser Screenshot Tool | `url` | PNG screenshot |
+| JSON to CSV Tool | `records` | CSV artifact |
+
+They are small enough to inspect before the first run and complete enough to
+call from MCP Studio. Existing template libraries are never changed or
+backfilled during startup. See
+[First-Run Starter Templates](docs/starter-templates.md) for step contracts,
+defaults, safety boundaries, and the path from template to agent tool.
+
 ## Why Flyto2 Flow
 
 | Pain | What Flow provides |
@@ -104,6 +120,27 @@ The default endpoint is accountless and loopback-only. Non-loopback MCP access
 is rejected unless the operator explicitly configures a bearer token. Read
 [MCP Studio and Client Setup](docs/mcp-studio.md) before exposing it beyond the
 local machine.
+
+## API
+
+The local FastAPI gateway provides health, runtime configuration, workflow,
+template, execution, capability, and MCP surfaces under `/api`. The
+Streamable HTTP MCP endpoint is loopback-only by default and is not a hosted
+account API.
+
+Use [MCP Studio and Client Setup](docs/mcp-studio.md) for client contracts and
+[Architecture](ARCHITECTURE.md) for route ownership and trust boundaries.
+Treat backend models and the running OpenAPI document as the source of truth
+for exact request and response fields.
+
+## Configuration
+
+Start from `install/.env.ce.example`; do not commit `install/.env.ce`.
+Loopback binding, MCP bearer-token behavior, allowed browser origins, storage
+paths, and offline Core activation are operator-controlled settings. The
+[Deployment File Guide](install/README.md) explains file ownership, persistent
+data, and image verification. Network exposure guidance is in
+[Getting Started](docs/getting-started.md#network-exposure).
 
 ## Architecture
 
@@ -155,6 +192,8 @@ npm --prefix src/ui/web/frontend run build
 python src/ui/web/backend/main_offline.py --host 127.0.0.1 --port 9000 --no-reload
 ```
 
+## Testing
+
 Run the same repository gates used by CI:
 
 ```bash
@@ -174,10 +213,12 @@ flyto-index verify . --strict
 | [Tasks](tasks.md) | Maintainer-ready work queue and definition of done |
 | [Decisions](DECISIONS.md) | Durable architecture and product decisions |
 | [Getting Started](docs/getting-started.md) | Install, first tool, backup, update, and verification |
+| [Starter Templates](docs/starter-templates.md) | First-run HTTP, browser screenshot, and JSON-to-CSV MCP examples |
 | [MCP Studio](docs/mcp-studio.md) | Tool contract, client setup, access, and audit metadata |
 | [Use Cases](docs/use-cases.md) | Practical workflow patterns and guardrails |
 | [Documentation Index](docs/README.md) | Maintained operator, product, boundary, and release documentation |
 | [Feature Reference](docs/FEATURES.md) | Product surfaces mapped to source, limits, tests, and verification |
+| [Deployment Files](install/README.md) | Compose, image, environment, persistence, and release verification |
 | [Source Map](src/README.md) | Runtime ownership and source entry points |
 | [Script Guide](scripts/README.md) | Repository verification and release scripts |
 | [Test Guide](tests/README.md) | Test layers and commands |

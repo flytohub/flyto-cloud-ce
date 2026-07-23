@@ -17,9 +17,10 @@ issue tracker and commit history for work completed after this date.
 - Saved workflow definitions now use the local template store as the single
   persistence surface. The disconnected workflow CRUD provider and frontend
   wrappers are no longer exposed.
-- Empty first-run workspaces receive one idempotent HTTP GET MCP starter
-  workflow. Docker keeps workflow data and execution records on explicit
-  persisted-volume database paths.
+- Empty first-run workspaces receive three idempotent MCP starter workflows:
+  HTTP GET, browser screenshot, and JSON-to-CSV. Existing template libraries
+  are not modified. Docker keeps workflow data and execution records on
+  explicit persisted-volume database paths.
 - Playwright and Chromium in the CE container image.
 - SHA-256-verified offline `flyto-core` wheel import.
 - Explicit Flow/Cloud ownership and synchronization contracts.
@@ -36,9 +37,10 @@ issue tracker and commit history for work completed after this date.
 - CI covers boundary inventory, backend smoke, frontend tests and build,
   dependency licenses, SBOM generation, contribution terms, and container
   construction.
-- CE regression coverage now locks the starter seed, template-backed error
-  workflow resolution, current metrics collector, removed workflow CRUD
-  routes, persisted execution database path, and scoped dark-mode selectors.
+- CE regression coverage now locks all three starter contracts and idempotent
+  seeding, template-backed error workflow resolution, current metrics
+  collector, removed workflow CRUD routes, persisted execution database path,
+  and scoped dark-mode selectors.
 - The shared Flyto2 documentation contract now passes with a documentation
   index, feature/source manifest, workflow guides, and handoff registry.
 
@@ -55,7 +57,6 @@ They are not a warranty that every workflow or external service will succeed.
 
 ## Known Work
 
-- Expand first-run examples beyond the bundled starter workflow.
 - Add tested importable workflow recipes for common browser and API jobs.
 - Improve contributor-facing architecture references at complex runtime
   boundaries.

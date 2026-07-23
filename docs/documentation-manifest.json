@@ -30,13 +30,13 @@
       "id": "local-gateway",
       "description": "Owns accountless local APIs, MCP transport, persistence, execution integration, evidence, and replay services.",
       "paths": ["src/ui/web/backend/**"],
-      "documentation": ["docs/FEATURES.md#local-gateway-and-storage", "docs/FEATURES.md#mcp-studio", "ARCHITECTURE.md"]
+      "documentation": ["docs/FEATURES.md#local-gateway-and-storage", "docs/FEATURES.md#first-run-starter-library", "docs/starter-templates.md", "docs/FEATURES.md#mcp-studio", "ARCHITECTURE.md"]
     },
     {
       "id": "release-tooling",
       "description": "Owns self-hosted packaging, deterministic checks, dependency policy, SBOM generation, and release validation.",
       "paths": ["install/**", "scripts/**", "Makefile", "dependency-license-overrides.json", "src/ui/web/backend/requirements-ce.lock", "src/ui/web/frontend/package-lock.json"],
-      "documentation": ["docs/FEATURES.md#packaging-and-release-evidence", "scripts/README.md", "tests/README.md"]
+      "documentation": ["docs/FEATURES.md#packaging-and-release-evidence", "install/README.md", "scripts/README.md", "tests/README.md"]
     },
     {
       "id": "edition-and-license-boundary",
@@ -69,13 +69,24 @@
       "verification": ["make backend-smoke", "make frontend-verify"]
     },
     {
+      "id": "first-run-starter-library",
+      "title": "First-run starter library",
+      "kind": "workflow",
+      "status": "active",
+      "description": "Seeds inspectable HTTP GET, browser screenshot, and JSON-to-CSV MCP workflow examples into an empty local template library.",
+      "source": ["src/ui/web/backend/local/lifespan_local.py"],
+      "documentation": ["docs/FEATURES.md#first-run-starter-library", "docs/starter-templates.md", "docs/getting-started.md"],
+      "tests": ["tests/ce/test_release.py"],
+      "verification": ["python -m pytest -q tests/ce/test_release.py"]
+    },
+    {
       "id": "self-hosted-release",
       "title": "Self-hosted release",
       "kind": "operations",
       "status": "active",
       "description": "Packages the local gateway, frontend, Flyto2 Core, Playwright, and Chromium with license, purity, and SBOM evidence.",
       "source": ["install/**", "scripts/**", "Makefile"],
-      "documentation": ["docs/FEATURES.md#packaging-and-release-evidence", "docs/getting-started.md", "scripts/README.md"],
+      "documentation": ["docs/FEATURES.md#packaging-and-release-evidence", "docs/getting-started.md", "install/README.md", "scripts/README.md"],
       "tests": ["tests/ce/**"],
       "verification": ["make verify"]
     }
