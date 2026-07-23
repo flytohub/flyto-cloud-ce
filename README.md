@@ -8,6 +8,7 @@
 > and no hidden cloud runtime.
 
 [![Flyto2 Flow Verify](https://github.com/flytohub/flyto-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/flytohub/flyto-flow/actions/workflows/ci.yml)
+[![Docker Image Version](https://img.shields.io/docker/v/flyto2/flow?sort=semver&label=docker)](https://hub.docker.com/r/flyto2/flow)
 [![License: PolyForm Shield](https://img.shields.io/badge/license-PolyForm%20Shield-6d5dfc)](LICENSE)
 
 Building an automation is only half the job. An AI agent still needs a tool
@@ -28,19 +29,44 @@ Design visually -> test locally -> expose as MCP -> call from an agent -> audit 
 
 https://github.com/user-attachments/assets/4357d9a7-0c20-4252-8f72-695da275a3ec
 
+### Build and Debug Visually
+
+![Flyto2 Flow workflow builder with browser automation nodes and live properties](docs/assets/workflow-builder.jpg)
+
+Compose browser automation, APIs, files, data transformations, AI operations,
+and control flow on one canvas. Run locally, inspect each step, and retain
+evidence for the result.
+
+### Publish the Workflow as an MCP Tool
+
 ![MCP Studio showing workflow tools, generated arguments, and a live response](docs/assets/mcp-studio.jpg)
+
+MCP Studio generates the tool contract from the workflow, provides a local test
+surface, and produces connection settings for Codex, Claude Code, desktop
+clients, and Streamable HTTP clients.
 
 ## Quick Start
 
-Requirements: Docker with Compose support.
+Requirement: Docker Engine or Docker Desktop.
 
 ```bash
-cp install/.env.ce.example install/.env.ce
-docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml up --build
+docker pull docker.io/flyto2/flow:0.1.0
+docker run --detach \
+  --name flyto-flow \
+  --init \
+  --restart unless-stopped \
+  --shm-size=1g \
+  --publish 127.0.0.1:9000:9000 \
+  --volume flyto-flow-data:/data/flyto \
+  docker.io/flyto2/flow:0.1.0
 ```
 
 Open <http://127.0.0.1:9000>. Data is stored in the
-`flyto-flow-data` Docker volume.
+`flyto-flow-data` Docker volume. Production deployments should pin the digest
+reported by the release workflow.
+
+To review and build the image from source, follow
+[Build from Source](docs/getting-started.md#build-from-source).
 
 ## Usage
 
