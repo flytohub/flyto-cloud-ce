@@ -1,0 +1,76 @@
+name: Bug report
+description: Report reproducible behavior in the self-hosted Flyto2 Flow baseline.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Flyto2 Flow. Remove credentials, private URLs, customer data, and personal information before submitting evidence.
+  - type: input
+    id: revision
+    attributes:
+      label: Revision or release
+      description: Provide the release, image digest, or output of `git rev-parse --short HEAD`.
+      placeholder: b072f08
+    validations:
+      required: true
+  - type: dropdown
+    id: deployment
+    attributes:
+      label: Deployment mode
+      options:
+        - Docker Compose baseline
+        - Direct local development
+        - Custom self-hosted packaging
+    validations:
+      required: true
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: State the observed behavior and why it is a problem.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: Describe the smallest correct outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Reproduction steps
+      description: Use a minimal workflow and exact steps where possible.
+      placeholder: |
+        1. Start Flow with ...
+        2. Import or create ...
+        3. Run ...
+        4. Observe ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Sanitized logs or evidence
+      description: Include the relevant error, request shape, or screenshot after removing sensitive data.
+      render: shell
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include operating system, architecture, Docker version, browser, and any reverse proxy involved.
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I searched existing issues for the same behavior.
+          required: true
+        - label: I removed secrets, customer data, private URLs, and personal information.
+          required: true
+        - label: This is not a vulnerability report. I will use the private security process for security issues.
+          required: true

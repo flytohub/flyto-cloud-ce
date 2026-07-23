@@ -8,6 +8,13 @@ recorded here. Historical Apache-2.0 revisions remain governed by
 
 ### Added
 
+- Pain-led repository introduction, outcome-focused quick start, use cases,
+  MCP client guidance, architecture, project state, roadmap, task, and decision
+  documents.
+- Structured bug and feature issue forms that collect reproducible evidence and
+  enforce the self-hosted edition boundary.
+- Documentation integrity checks for required public files, local links,
+  Flyto2 branding, and `@flyto2.com` contact domains.
 - Visual MCP Studio for discovering workflow tools, generating typed inputs,
   making live calls, configuring agent clients, and reviewing audit metadata.
 - Additive MCP metadata for source workflows, contract versions, fingerprints,
@@ -16,6 +23,9 @@ recorded here. Historical Apache-2.0 revisions remain governed by
 
 ### Changed
 
+- Made the workflow-to-MCP value, local-first access model, intended audience,
+  and deliberate product limits explicit on the repository first screen.
+- Added the documentation integrity check to local and CI verification.
 - Documented the exact Flow-to-Cloud synchronization allowlist and ownership
   boundary for the shared MCP Studio.
 - Allowed browser clients on one loopback port to call the local API on another

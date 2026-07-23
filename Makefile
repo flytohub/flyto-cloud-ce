@@ -1,4 +1,7 @@
-.PHONY: audit backend-smoke frontend-verify licenses sbom verify
+.PHONY: audit backend-smoke docs frontend-verify licenses sbom verify
+
+docs:
+	python scripts/check_docs.py .
 
 audit:
 	python scripts/check-ce-purity.py .
@@ -18,4 +21,4 @@ licenses:
 sbom:
 	python scripts/generate_ce_sbom.py . --python-installed
 
-verify: audit backend-smoke frontend-verify licenses sbom
+verify: docs audit backend-smoke frontend-verify licenses sbom

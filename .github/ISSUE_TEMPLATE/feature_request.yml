@@ -1,0 +1,77 @@
+name: Feature proposal
+description: Propose a focused outcome for the self-hosted Flyto2 Flow baseline.
+title: "[Feature]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Strong proposals start with a user problem, not a large solution. Explain why the capability belongs in the local baseline and how it can be verified.
+  - type: textarea
+    id: problem
+    attributes:
+      label: User problem
+      description: Who is blocked, what are they trying to do, and what fails today?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Smallest useful outcome
+      description: Describe observable behavior, not an implementation wish list.
+    validations:
+      required: true
+  - type: textarea
+    id: workflow
+    attributes:
+      label: Example workflow
+      description: Show the inputs, major steps, expected output, and failure behavior.
+      placeholder: input -> validate -> act -> verify -> output
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Visual workflow builder
+        - MCP Studio or protocol
+        - Local execution runtime
+        - Browser automation
+        - Evidence, replay, or observability
+        - Packaging or offline operation
+        - Documentation or contributor experience
+        - Other baseline capability
+    validations:
+      required: true
+  - type: textarea
+    id: baseline
+    attributes:
+      label: Why this belongs in Flow
+      description: Explain why it is a generic self-hosted capability rather than hosted identity, billing, collaboration, telemetry, marketplace, or managed execution.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Include scripts, existing modules, composition, or operational workarounds already tried.
+    validations:
+      required: true
+  - type: textarea
+    id: verification
+    attributes:
+      label: Acceptance evidence
+      description: What tests, sample workflow, screenshots, or commands would prove the outcome?
+    validations:
+      required: true
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I reviewed the roadmap, edition matrix, and existing issues.
+          required: true
+        - label: The proposal preserves accountless, local-first operation.
+          required: true
+        - label: I can discuss a smaller first contribution if the full proposal is too broad.
+          required: true

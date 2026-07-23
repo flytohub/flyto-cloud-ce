@@ -53,7 +53,7 @@ Each commit in a pull request must contain both trailers below. The exact
 `Flyto2-CLA` trailer records acceptance of this Agreement for that contribution.
 
 ```text
-Signed-off-by: Your Name <you@example.com>
+Signed-off-by: Your Name <your-email>
 Flyto2-CLA: accepted
 ```
 

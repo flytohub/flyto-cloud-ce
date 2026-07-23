@@ -1,105 +1,150 @@
+<p align="center">
+  <img src="logo.png" width="88" alt="Flyto2 Flow logo">
+</p>
+
 # Flyto2 Flow
 
-> Build workflows visually. Publish them as MCP tools.
+> Turn a visual workflow into a local MCP tool. No custom server, no account,
+> and no hidden cloud runtime.
 
-Flyto2 Flow is a source-available, self-hosted visual workflow and MCP builder powered by `flyto-core`. Combine browser automation, APIs, files, data processing, and control-flow atoms in the UI, test the workflow locally, then expose it as an MCP tool.
+[![Flyto2 Flow Verify](https://github.com/flytohub/flyto-flow/actions/workflows/ci.yml/badge.svg)](https://github.com/flytohub/flyto-flow/actions/workflows/ci.yml)
+[![License: PolyForm Shield](https://img.shields.io/badge/license-PolyForm%20Shield-6d5dfc)](LICENSE)
 
-## Demo
+Building an automation is only half the job. An AI agent still needs a tool
+schema, an MCP transport, access controls, execution history, and enough
+evidence to explain what happened. Maintaining that glue beside every workflow
+is slow and easy to get wrong.
+
+Flyto2 Flow is a source-available, self-hosted visual workflow builder that
+closes that gap. Combine browser automation, HTTP APIs, files, data processing,
+AI steps, and control flow; run the workflow through `flyto-core`; then expose
+the same workflow as a typed MCP tool from the built-in MCP Studio.
+
+```text
+Design visually -> test locally -> expose as MCP -> call from an agent -> audit the run
+```
+
+## See It Work
 
 https://github.com/user-attachments/assets/4357d9a7-0c20-4252-8f72-695da275a3ec
 
-## Usage
-
-Build or import a workflow, add an MCP trigger, and open **MCP Studio** from
-the primary navigation. Select the generated tool, complete the schema-driven
-form, run it locally, then use **Connect** to configure Codex, Claude Code, a
-desktop client, or another Streamable HTTP client. The **Audit** view explains
-the source, contract, risk, approval, and evidence attached to every tool.
-
-## MCP Studio
-
 ![MCP Studio showing workflow tools, generated arguments, and a live response](docs/assets/mcp-studio.jpg)
-
-MCP Studio turns a visual workflow into an agent tool without requiring a
-custom server. Create a workflow with an MCP trigger, inspect its generated
-JSON Schema, call it from the browser, review the response and session history,
-then copy a ready-to-use configuration for Codex, Claude Code, desktop clients,
-or any Streamable HTTP client.
-
-```text
-Design workflow -> expose tool -> test call -> connect agent -> audit evidence
-```
-
-Tool metadata records the source workflow, contract version, deterministic
-fingerprint, risk level, approval policy, and evidence references. Local Flow
-uses a loopback accountless endpoint by default; Flyto2 Cloud presents the same
-studio through its authenticated hosted endpoint.
-
-## Architecture
-
-```text
-Visual atoms → Workflow → Local execution → MCP tool
-```
-
-- Visual workflow and template builder
-- Local execution through `flyto-core`
-- MCP tools over stdio and Streamable HTTP
-- Built-in MCP Studio for discovery, schema forms, live calls, client setup,
-  and session audit
-- SQLite-backed workflows, templates, variables, runs, evidence, and replay
-- Chromium and Playwright bundled into the release image
-- Offline `flyto-core` updates from an operator-supplied, SHA-256-verified wheel
-
-## Local Means Local
-
-Flyto2 Flow starts without an account, email address, or password. It has one local workspace and contains no Firebase integration, hosted membership system, chat, marketplace, remote collaboration, billing, analytics, telemetry, CDN loader, or automatic package download.
-
-The application itself makes no implicit outbound connection. A workflow can still access a URL when the operator deliberately adds and runs a network-capable atom; that is user-authored workflow behavior, not application telemetry or phone-home traffic.
-
-The default Compose configuration publishes only to `127.0.0.1`. Keep it on loopback unless you deliberately place it behind your own authenticated reverse proxy.
 
 ## Quick Start
 
-The image is assembled with `flyto-core`, Playwright, and Chromium already installed. Starting a built image does not download runtime dependencies.
+Requirements: Docker with Compose support.
 
 ```bash
 cp install/.env.ce.example install/.env.ce
 docker compose --env-file install/.env.ce -f install/docker-compose.ce.yml up --build
 ```
 
-Open <http://127.0.0.1:9000>. Application data is stored in the `flyto-flow-data` Docker volume.
+Open <http://127.0.0.1:9000>. Data is stored in the
+`flyto-flow-data` Docker volume.
 
-## Configuration
+## Usage
 
-Container defaults are documented in `install/.env.ce.example`; direct-process
-defaults are documented in `.env.example`. The server is accountless and bound
-to loopback by default. The Compose profile explicitly trusts its private
-Docker bridge only while the published port remains bound to `127.0.0.1`. Set
-`FLYTO_FLOW_MCP_TOKEN` when an authenticated reverse proxy deliberately exposes
-MCP beyond the local machine.
+### Create Your First Agent Tool
 
-## API
+1. Open **MCP Studio** from the primary navigation.
+2. Select **New tool** to create an MCP-triggered starter workflow.
+3. Edit the workflow, add the steps that do the work, and define its inputs.
+4. Return to **MCP Studio**, run the generated schema form, and inspect the
+   response.
+5. Open **Connect** and use the generated Codex, Claude Code, desktop-client,
+   or Streamable HTTP configuration.
 
-- `GET /api/mcp/status` discovers the local MCP endpoint and protocol metadata.
-- `POST /api/mcp` accepts MCP Streamable HTTP JSON-RPC requests.
-- `POST /api/core/upload` imports an operator-supplied, verified `flyto-core`
-  wheel without contacting a package registry.
+The complete install, verification, backup, and exposure guidance is in
+[Getting Started](docs/getting-started.md).
 
-## Update `flyto-core` Without Connecting the Appliance
+## Why Flyto2 Flow
 
-Download a trusted `flyto-core` wheel on another machine, transfer it to the Flyto2 Flow operator, calculate its SHA-256 digest, then import it locally:
+| Pain | What Flow provides |
+| --- | --- |
+| A workflow and its agent interface drift apart | The MCP tool schema is generated from the workflow trigger and input fields |
+| A visual demo works, but production failures are opaque | Local run history, evidence, replay, lineage, metrics, traces, and alerts |
+| Browser and API steps require separate automation stacks | One canvas for browser, HTTP, file, data, AI, and control-flow steps |
+| Self-hosting still calls a vendor service | Accountless startup, loopback binding, local SQLite storage, and no application telemetry |
+| Agent tools are exposed without context | Source workflow, contract version, deterministic fingerprint, risk, approval, and evidence metadata |
 
-```bash
-curl -X POST http://127.0.0.1:9000/api/core/upload \
-  -H "X-Flyto-Core-SHA256: <64-character-sha256>" \
-  -F "file=@flyto_core-<version>-py3-none-any.whl"
+Flyto2 Flow is designed for developers and operators who want a visual
+automation builder without giving up local execution or MCP-level inspection.
+It is not a hosted team workspace, billing platform, marketplace, or managed
+runner. Those boundaries are deliberate and tested.
+
+## What You Can Build
+
+- **Browser research tools:** navigate, interact, extract structured results,
+  and retain evidence for review.
+- **API operations:** call authenticated HTTP services, transform data, branch,
+  retry, and return a typed result to an agent.
+- **Human-approved actions:** pause at a breakpoint before a sensitive step and
+  continue only after operator approval.
+- **Local document pipelines:** read and write files, process data, and keep the
+  runtime on the operator-controlled machine.
+- **Reusable agent capabilities:** turn a tested workflow into a discoverable
+  MCP tool instead of maintaining a second server by hand.
+
+See [Use Cases](docs/use-cases.md) for concrete workflow shapes and safety
+considerations.
+
+## MCP Studio
+
+MCP Studio is the control surface for workflow-backed tools:
+
+- discover workflows whose `flow.trigger` uses `trigger_type: mcp`;
+- inspect and fill the generated JSON Schema;
+- make a live local tool call and review the response;
+- copy client configuration for Codex, Claude Code, desktop clients, or any
+  Streamable HTTP client;
+- audit the tool's source, contract, fingerprint, risk, approval policy, and
+  evidence references.
+
+The default endpoint is accountless and loopback-only. Non-loopback MCP access
+is rejected unless the operator explicitly configures a bearer token. Read
+[MCP Studio and Client Setup](docs/mcp-studio.md) before exposing it beyond the
+local machine.
+
+## Architecture
+
+```text
+Vue visual builder
+        |
+FastAPI local gateway ---- SQLite workspace, runs, evidence, replay
+        |
+flyto-core execution engine ---- Playwright + Chromium
+        |
+MCP stdio bridge / Streamable HTTP endpoint
 ```
 
-The importer does not invoke `pip` or contact PyPI. It checks the package name, digest, archive paths, size limits, and a clean `import core` before atomically activating the new version. Restart the container after a successful import so every worker uses the same version.
+The release image bundles `flyto-core`, Playwright, and Chromium. Starting a
+built image does not download runtime dependencies. Operator-supplied
+`flyto-core` wheels are accepted only through a size-limited, path-checked,
+SHA-256-verified offline importer.
+
+Read [Architecture](ARCHITECTURE.md) for component ownership, data flow,
+security boundaries, and extension points.
+
+## Local Means Local
+
+Flyto2 Flow starts without an account, email address, or password. It contains
+no Firebase integration, hosted membership system, chat, marketplace, remote
+collaboration, billing, analytics, telemetry, CDN loader, or automatic package
+download.
+
+The application makes no implicit outbound connection. A workflow can access a
+URL when its operator deliberately adds and runs a network-capable step; that
+is workflow behavior, not application phone-home traffic.
+
+The default Compose configuration publishes only to `127.0.0.1`. Keep it on
+loopback unless it is deliberately placed behind an authenticated reverse
+proxy. See [Security Policy](SECURITY.md) and
+[CE/Cloud Boundary](docs/ce-cloud-boundary.md).
 
 ## Development
 
-Requirements: Python 3.12 and Node.js 20. Docker is the supported way to get the exact browser runtime.
+Requirements: Python 3.12 and Node.js 20. Docker is the supported way to obtain
+the exact browser runtime.
 
 ```bash
 python -m venv .venv
@@ -110,10 +155,7 @@ npm --prefix src/ui/web/frontend run build
 python src/ui/web/backend/main_offline.py --host 127.0.0.1 --port 9000 --no-reload
 ```
 
-## Testing
-
-Run the same boundary, backend, frontend, dependency-license, SBOM, and build
-checks used by the repository verification workflow:
+Run the same repository gates used by CI:
 
 ```bash
 make verify
@@ -121,14 +163,47 @@ flyto-index scan .
 flyto-index verify . --strict
 ```
 
-## Project Boundary
+## Project Guide
 
-Flyto2 Flow is the clean canonical baseline. `flyto-cloud` consumes and extends it through documented edition seams, but Cloud-only source must never be merged into this repository. Shared fixes normally flow from Flow to Cloud; a generic fix discovered in Cloud may return only through the allowlisted, purity-gated backport process. Membership, hosted services, billing, chat, telemetry, and remote collaboration stay downstream.
+| Document | Purpose |
+| --- | --- |
+| [Project](PROJECT.md) | Product promise, audience, scope, and success criteria |
+| [Architecture](ARCHITECTURE.md) | Runtime components, trust boundaries, and data flow |
+| [Current State](STATE.md) | Shipped, validated, limited, and pending work |
+| [Roadmap](ROADMAP.md) | Outcome-led priorities without release-date promises |
+| [Tasks](tasks.md) | Maintainer-ready work queue and definition of done |
+| [Decisions](DECISIONS.md) | Durable architecture and product decisions |
+| [Getting Started](docs/getting-started.md) | Install, first tool, backup, update, and verification |
+| [MCP Studio](docs/mcp-studio.md) | Tool contract, client setup, access, and audit metadata |
+| [Use Cases](docs/use-cases.md) | Practical workflow patterns and guardrails |
+| [Source Map](src/README.md) | Runtime ownership and source entry points |
+| [Script Guide](scripts/README.md) | Repository verification and release scripts |
+| [Test Guide](tests/README.md) | Test layers and commands |
+| [Edition Matrix](docs/edition-matrix.md) | Source-available baseline versus hosted product boundary |
+| [Contributing](CONTRIBUTING.md) | Change process, checks, license, and contribution terms |
 
-See [CE/Cloud Boundary](docs/ce-cloud-boundary.md), [Flow/Cloud Sync](docs/flow-cloud-sync.md), [Edition Matrix](docs/edition-matrix.md), and [Contributing](CONTRIBUTING.md).
+## Contributing
+
+Start with a focused issue that explains the user problem and smallest useful
+outcome. Bug reports should include the revision, deployment mode, reproduction
+steps, and sanitized evidence. Feature proposals must explain why the change
+belongs in the self-hosted baseline rather than the hosted product.
+
+Read [Contributing](CONTRIBUTING.md), the
+[Contributor License Agreement](CONTRIBUTOR_LICENSE_AGREEMENT.md), and the
+[Flow/Cloud Sync Contract](docs/flow-cloud-sync.md) before opening a pull
+request. Security reports must follow [Security Policy](SECURITY.md), never a
+public issue.
 
 ## License and Trademark
 
-Current revisions use the [PolyForm Shield License 1.0.0](LICENSE): you may inspect, use, modify, and distribute the code for permitted purposes, but you may not use it to provide a product or service that competes with Flyto2. This is source-available/fair-code, not OSI-approved open source. Revisions through commit `9398a62` remain Apache-2.0 and cannot be retroactively restricted.
+Current revisions use the [PolyForm Shield License 1.0.0](LICENSE): you may
+inspect, use, modify, and distribute the code for permitted purposes, but you
+may not use it to provide a product or service that competes with Flyto2. This
+is source-available/fair-code, not OSI-approved open source. Revisions through
+commit `9398a62` remain Apache-2.0 and cannot be retroactively restricted.
 
-Read [License History](LICENSE_HISTORY.md), [Commercial Licensing](COMMERCIAL_LICENSE.md), [Trademark Policy](TRADEMARKS.md), and the [Licensing Strategy](docs/licensing-strategy.md) before redistribution or commercial use.
+Read [License History](LICENSE_HISTORY.md),
+[Commercial Licensing](COMMERCIAL_LICENSE.md), [Trademark Policy](TRADEMARKS.md),
+and [Licensing Strategy](docs/licensing-strategy.md) before redistribution or
+commercial use.
