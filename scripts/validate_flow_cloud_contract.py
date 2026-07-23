@@ -84,18 +84,20 @@ def _read_path_list(path: Path, field: str) -> list[str]:
     return values
 
 
-def _load_local(root: Path) -> dict[str, Any]:
+def _read_manifest(root: Path) -> tuple[Path, bytes, dict[str, Any]]:
     root = root.resolve()
     manifest_path = root / MANIFEST_NAME
-    failures: list[str] = []
     try:
         raw = manifest_path.read_bytes()
         manifest = json.loads(raw.decode("utf-8"))
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise ContractError(f"{MANIFEST_NAME} is unreadable or invalid: {exc}") from exc
-
     if not isinstance(manifest, dict):
         raise ContractError(f"{MANIFEST_NAME} must contain a JSON object")
+    return root, raw, manifest
+
+
+def _validate_manifest_identity(manifest: dict[str, Any], failures: list[str]) -> None:
     if manifest.get("schema") != EXPECTED_SCHEMA:
         failures.append(f"schema must be {EXPECTED_SCHEMA}")
     if manifest.get("flow_repository") != EXPECTED_FLOW_REPOSITORY:
@@ -111,6 +113,12 @@ def _load_local(root: Path) -> dict[str, Any]:
     if manifest.get("contract") != EXPECTED_CONTRACT:
         failures.append("contract policy does not match the supported v2 protocol")
 
+
+def _validate_shared_paths(
+    root: Path,
+    manifest: dict[str, Any],
+    failures: list[str],
+) -> list[str]:
     shared_paths = _string_list(manifest.get("shared_paths"), "shared_paths", failures)
     if shared_paths:
         if shared_paths[0] != MANIFEST_NAME:
@@ -120,7 +128,10 @@ def _load_local(root: Path) -> dict[str, Any]:
                 failures.append(f"unsafe shared path: {value}")
             elif not (root / value).is_file():
                 failures.append(f"missing shared path: {value}")
+    return shared_paths
 
+
+def _validate_markers(manifest: dict[str, Any], failures: list[str]) -> None:
     markers = _string_list(
         manifest.get("forbidden_cloud_to_flow_markers"),
         "forbidden_cloud_to_flow_markers",
@@ -131,6 +142,8 @@ def _load_local(root: Path) -> dict[str, Any]:
     if any(marker != marker.lower() for marker in markers):
         failures.append("forbidden_cloud_to_flow_markers must be lowercase")
 
+
+def _validate_required_gates(manifest: dict[str, Any], failures: list[str]) -> None:
     required_gates = manifest.get("required_gates")
     if not isinstance(required_gates, dict):
         failures.append("required_gates must be an object")
@@ -138,17 +151,28 @@ def _load_local(root: Path) -> dict[str, Any]:
         _string_list(required_gates.get("flow"), "required_gates.flow", failures)
         _string_list(required_gates.get("cloud"), "required_gates.cloud", failures)
 
+
+def _validate_license_policy(manifest: dict[str, Any], failures: list[str]) -> None:
     license_policy = manifest.get("license_policy")
     if not isinstance(license_policy, dict):
         failures.append("license_policy must be an object")
-    else:
-        if license_policy.get("flow") != "PolyForm-Shield-1.0.0":
-            failures.append("Flow license policy must remain PolyForm-Shield-1.0.0")
-        if license_policy.get("cloud") != "Flyto2-Source-Available-1.1":
-            failures.append("Cloud license policy must remain Flyto2-Source-Available-1.1")
-        if not COMMIT_SHA.fullmatch(str(license_policy.get("historical_flow_boundary", ""))):
-            failures.append("historical_flow_boundary must be a full commit SHA")
+        return
+    if license_policy.get("flow") != "PolyForm-Shield-1.0.0":
+        failures.append("Flow license policy must remain PolyForm-Shield-1.0.0")
+    if license_policy.get("cloud") != "Flyto2-Source-Available-1.1":
+        failures.append("Cloud license policy must remain Flyto2-Source-Available-1.1")
+    if not COMMIT_SHA.fullmatch(str(license_policy.get("historical_flow_boundary", ""))):
+        failures.append("historical_flow_boundary must be a full commit SHA")
 
+
+def _load_local(root: Path) -> dict[str, Any]:
+    root, raw, manifest = _read_manifest(root)
+    failures: list[str] = []
+    _validate_manifest_identity(manifest, failures)
+    shared_paths = _validate_shared_paths(root, manifest, failures)
+    _validate_markers(manifest, failures)
+    _validate_required_gates(manifest, failures)
+    _validate_license_policy(manifest, failures)
     if failures:
         raise ContractError("\n".join(failures))
     return {
@@ -158,6 +182,79 @@ def _load_local(root: Path) -> dict[str, Any]:
         "manifest_sha256": hashlib.sha256(raw).hexdigest(),
         "shared_paths": shared_paths,
     }
+
+
+def _validate_peer(snapshot: dict[str, Any], peer_root: Path | None) -> None:
+    if peer_root is None:
+        return
+    peer = _load_local(peer_root)
+    if snapshot["raw"] != peer["raw"]:
+        raise ContractError("Flow and Cloud manifests must be byte-identical")
+
+
+def _validate_source_identity(
+    manifest: dict[str, Any],
+    source_repository: str | None,
+    source_sha: str | None,
+) -> None:
+    if (source_repository is None) != (source_sha is None):
+        raise ContractError("source_repository and source_sha must be provided together")
+    if source_repository is None:
+        return
+    allowed_repositories = {
+        manifest["flow_repository"],
+        manifest["cloud_repository"],
+    }
+    if source_repository not in allowed_repositories:
+        raise ContractError(f"source_repository is not part of the contract: {source_repository}")
+    if not COMMIT_SHA.fullmatch(source_sha or ""):
+        raise ContractError("source_sha must be a full lowercase commit SHA")
+
+
+def _validate_manifest_digest(
+    snapshot: dict[str, Any],
+    expected_manifest_sha256: str | None,
+) -> None:
+    if expected_manifest_sha256 is None:
+        return
+    if not SHA256.fullmatch(expected_manifest_sha256):
+        raise ContractError("expected_manifest_sha256 must be a lowercase SHA-256 digest")
+    if expected_manifest_sha256 != snapshot["manifest_sha256"]:
+        raise ContractError("source manifest SHA-256 does not match the dispatched digest")
+
+
+def _validate_contract_version(
+    manifest: dict[str, Any],
+    expected_contract_version: int | None,
+) -> int:
+    contract_version = manifest["contract"]["version"]
+    if expected_contract_version is not None and expected_contract_version != contract_version:
+        raise ContractError(
+            f"contract version mismatch: expected {expected_contract_version}, found {contract_version}"
+        )
+    return contract_version
+
+
+def _validate_candidate_paths(
+    snapshot: dict[str, Any],
+    candidate_paths: Path | None,
+    expected_paths: Path | None,
+) -> list[str]:
+    selected_paths: list[str] = []
+    if candidate_paths is not None:
+        selected_paths = _read_path_list(candidate_paths, "candidate_paths")
+        allowlist = set(snapshot["shared_paths"])
+        unexpected = sorted(set(selected_paths) - allowlist)
+        if unexpected:
+            raise ContractError(f"candidate paths are outside the allowlist: {', '.join(unexpected)}")
+    if expected_paths is None:
+        return selected_paths
+    if candidate_paths is None:
+        raise ContractError("expected_paths requires candidate_paths")
+    expected = _read_path_list(expected_paths, "expected_paths")
+    if set(selected_paths) != set(expected):
+        raise ContractError("candidate paths do not exactly match the selected paths")
+    return selected_paths
 
 
 def validate_contract(
@@ -174,49 +271,11 @@ def validate_contract(
     """Validate local, peer, provenance, and candidate-diff invariants."""
     snapshot = _load_local(root)
     manifest = snapshot["manifest"]
-
-    if peer_root is not None:
-        peer = _load_local(peer_root)
-        if snapshot["raw"] != peer["raw"]:
-            raise ContractError("Flow and Cloud manifests must be byte-identical")
-
-    if (source_repository is None) != (source_sha is None):
-        raise ContractError("source_repository and source_sha must be provided together")
-    if source_repository is not None:
-        allowed_repositories = {
-            manifest["flow_repository"],
-            manifest["cloud_repository"],
-        }
-        if source_repository not in allowed_repositories:
-            raise ContractError(f"source_repository is not part of the contract: {source_repository}")
-        if not COMMIT_SHA.fullmatch(source_sha or ""):
-            raise ContractError("source_sha must be a full lowercase commit SHA")
-
-    if expected_manifest_sha256 is not None:
-        if not SHA256.fullmatch(expected_manifest_sha256):
-            raise ContractError("expected_manifest_sha256 must be a lowercase SHA-256 digest")
-        if expected_manifest_sha256 != snapshot["manifest_sha256"]:
-            raise ContractError("source manifest SHA-256 does not match the dispatched digest")
-
-    contract_version = manifest["contract"]["version"]
-    if expected_contract_version is not None and expected_contract_version != contract_version:
-        raise ContractError(
-            f"contract version mismatch: expected {expected_contract_version}, found {contract_version}"
-        )
-
-    selected_paths: list[str] = []
-    if candidate_paths is not None:
-        selected_paths = _read_path_list(candidate_paths, "candidate_paths")
-        allowlist = set(snapshot["shared_paths"])
-        unexpected = sorted(set(selected_paths) - allowlist)
-        if unexpected:
-            raise ContractError(f"candidate paths are outside the allowlist: {', '.join(unexpected)}")
-    if expected_paths is not None:
-        if candidate_paths is None:
-            raise ContractError("expected_paths requires candidate_paths")
-        expected = _read_path_list(expected_paths, "expected_paths")
-        if set(selected_paths) != set(expected):
-            raise ContractError("candidate paths do not exactly match the selected paths")
+    _validate_peer(snapshot, peer_root)
+    _validate_source_identity(manifest, source_repository, source_sha)
+    _validate_manifest_digest(snapshot, expected_manifest_sha256)
+    contract_version = _validate_contract_version(manifest, expected_contract_version)
+    selected_paths = _validate_candidate_paths(snapshot, candidate_paths, expected_paths)
 
     return {
         "ok": True,

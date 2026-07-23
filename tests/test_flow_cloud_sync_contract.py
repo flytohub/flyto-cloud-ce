@@ -96,6 +96,23 @@ class FlowCloudContractTests(unittest.TestCase):
             with self.assertRaisesRegex(VALIDATOR.ContractError, "unsafe shared path"):
                 VALIDATOR.validate_contract(root)
 
+    def test_manifest_sections_fail_closed(self) -> None:
+        cases = [
+            ("schema", "unsupported", "schema must be"),
+            ("forbidden_cloud_to_flow_markers", ["Firebase"], "must be lowercase"),
+            ("required_gates", [], "required_gates must be an object"),
+            ("license_policy", [], "license_policy must be an object"),
+        ]
+        for field, value, expected_error in cases:
+            with self.subTest(field=field), tempfile.TemporaryDirectory() as temp:
+                root = self._fixture(Path(temp), "local")
+                manifest = self._manifest(root)
+                manifest[field] = value
+                self._write_manifest(root, manifest)
+
+                with self.assertRaisesRegex(VALIDATOR.ContractError, expected_error):
+                    VALIDATOR.validate_contract(root)
+
     def test_candidate_diff_must_exactly_match_selected_allowlisted_paths(self) -> None:
         with tempfile.TemporaryDirectory() as temp:
             parent = Path(temp)
