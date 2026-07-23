@@ -119,3 +119,20 @@ the offline baseline.
 **Consequences:** generic Header style changes land in Flow and synchronize
 through the guarded contract. Edition-specific menu entries remain local, and
 both components must use the shared class names and pass responsive review.
+
+## D-009: Saved Workflows Use The Template Store
+
+**Status:** accepted
+
+The local template store is the only persisted workflow-definition surface.
+The `/api/workflows` family is limited to direct execution and graph
+conversion operations; CRUD, version, and saved-workflow execution wrappers
+that are not used by the Builder are not part of the Flow API.
+
+**Why:** maintaining a second workflow provider created records the visual
+Builder never wrote, so error-workflow lookup, MCP discovery, and normal
+editing could observe different sources of truth.
+
+**Consequences:** saved-workflow selection, error handling, and execution
+loading resolve through `DataProvider.templates`. Route and frontend tests must
+fail if the removed CRUD surface or wrappers return.

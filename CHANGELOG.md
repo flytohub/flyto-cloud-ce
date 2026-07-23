@@ -25,6 +25,8 @@ recorded here. Historical Apache-2.0 revisions remain governed by
 - Additive MCP metadata for source workflows, contract versions, fingerprints,
   risk levels, approval policies, and evidence references.
 - Repository-level guidance for contributors and coding agents.
+- Idempotent first-run HTTP GET MCP starter workflow for empty local
+  workspaces.
 
 ### Changed
 
@@ -41,3 +43,11 @@ recorded here. Historical Apache-2.0 revisions remain governed by
   loopback port while continuing to reject non-loopback origins.
 - Preserved accountless MCP access through the loopback-only Compose port with
   an explicit, fail-closed Docker bridge trust flag.
+- Consolidated saved workflow definitions on the local template store and
+  removed the disconnected workflow CRUD, version, and execute wrappers that
+  the Builder never used.
+- Persisted execution records under the Docker data volume, resolved
+  error-workflow links from saved templates, and restored alert metrics
+  collection through the current collector API.
+- Corrected scoped dark-mode selectors for shared controls and template menus,
+  and aligned the shared MCP Studio tab/content spacing in Flow and Cloud.

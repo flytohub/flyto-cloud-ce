@@ -14,6 +14,12 @@ issue tracker and commit history for work completed after this date.
 - MCP stdio and Streamable HTTP surfaces with loopback-first access controls.
 - Local workflows, templates, variables, execution records, evidence, replay,
   lineage, metrics, traces, and alerts.
+- Saved workflow definitions now use the local template store as the single
+  persistence surface. The disconnected workflow CRUD provider and frontend
+  wrappers are no longer exposed.
+- Empty first-run workspaces receive one idempotent HTTP GET MCP starter
+  workflow. Docker keeps workflow data and execution records on explicit
+  persisted-volume database paths.
 - Playwright and Chromium in the CE container image.
 - SHA-256-verified offline `flyto-core` wheel import.
 - Explicit Flow/Cloud ownership and synchronization contracts.
@@ -30,6 +36,9 @@ issue tracker and commit history for work completed after this date.
 - CI covers boundary inventory, backend smoke, frontend tests and build,
   dependency licenses, SBOM generation, contribution terms, and container
   construction.
+- CE regression coverage now locks the starter seed, template-backed error
+  workflow resolution, current metrics collector, removed workflow CRUD
+  routes, persisted execution database path, and scoped dark-mode selectors.
 - The shared Flyto2 documentation contract now passes with a documentation
   index, feature/source manifest, workflow guides, and handoff registry.
 

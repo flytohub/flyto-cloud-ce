@@ -82,6 +82,12 @@ def test_application_exposes_only_local_route_families():
         "/api/wallet",
     )
     assert not [path for path in paths if path.startswith(forbidden)]
+    assert not {
+        "/api/workflows/",
+        "/api/workflows/{workflow_id}",
+        "/api/workflows/{workflow_id}/execute",
+        "/api/workflows/{workflow_id}/history",
+    } & paths
 
 
 def test_mcp_tools_include_portable_audit_metadata(monkeypatch):
@@ -192,8 +198,91 @@ async def test_template_crud_needs_no_identity_or_headers():
         assert (await client.get(f"/api/templates/{template_id}")).status_code == 404
 
 
+@pytest.mark.asyncio
+async def test_first_run_starter_template_seed_is_idempotent():
+    from gateway.local_context import LOCAL_WORKSPACE
+    from gateway.providers.hub import get_data_provider
+    from local.lifespan_local import seed_starter_templates
+
+    await seed_starter_templates()
+    await seed_starter_templates()
+
+    templates = await get_data_provider().templates.list_workspace_templates(
+        workspace_id=LOCAL_WORKSPACE.id,
+        page=1,
+        page_size=20,
+    )
+    assert templates.total == 1
+    starter = templates.items[0]
+    assert starter.name == "HTTP GET Request Tool"
+    assert starter.steps[0]["module"] == "flow.trigger"
+    assert starter.steps[0]["params"]["trigger_type"] == "mcp"
+    assert starter.steps[1]["module"] == "core.api.http_get"
+
+
+@pytest.mark.asyncio
+async def test_error_workflow_resolution_uses_saved_templates():
+    import yaml
+
+    from gateway.local_context import LOCAL_WORKSPACE
+    from gateway.providers.data.models import TemplateCreateDTO
+    from gateway.providers.hub import get_data_provider
+    from services.runtime.execution.error_handler import get_error_workflow_id
+    from services.runtime.execution.template_loader import fetch_workflow_yaml
+
+    templates = get_data_provider().templates
+    fallback = await templates.create_template(
+        workspace_id=LOCAL_WORKSPACE.id,
+        data=TemplateCreateDTO(
+            name="Failure handler",
+            steps=[{"id": "notify", "module": "core.api.http_post", "params": {}}],
+        ),
+    )
+    source = await templates.create_template(
+        workspace_id=LOCAL_WORKSPACE.id,
+        data=TemplateCreateDTO(
+            name="Primary workflow",
+            steps=[],
+            error_workflow_id=fallback.id,
+        ),
+    )
+
+    assert (
+        await get_error_workflow_id(source.id, LOCAL_WORKSPACE.id)
+        == fallback.id
+    )
+    fallback_yaml = await fetch_workflow_yaml(fallback.id, LOCAL_WORKSPACE.id)
+    parsed = yaml.safe_load(fallback_yaml)
+    assert parsed["name"] == "Failure handler"
+    assert parsed["steps"][0]["module"] == "core.api.http_post"
+
+
+@pytest.mark.asyncio
+async def test_alert_scheduler_reads_current_collector_samples(monkeypatch):
+    from types import SimpleNamespace
+
+    from services.observability.alerts import scheduler as scheduler_module
+
+    collector = SimpleNamespace(
+        get_all_metrics=lambda: [
+            SimpleNamespace(
+                name="requests_total",
+                samples=[SimpleNamespace(value=7.0)],
+            )
+        ]
+    )
+    monkeypatch.setattr(scheduler_module, "get_collector", lambda: collector)
+
+    metrics = await scheduler_module.AlertScheduler(
+        manager=SimpleNamespace()
+    )._collect_metrics()
+
+    assert metrics["requests_total"] == 7.0
+
+
 def test_docker_image_bundles_complete_runtime():
     body = (ROOT / "install/Dockerfile.ce").read_text(encoding="utf-8").lower()
+    env_example = (ROOT / "install/.env.ce.example").read_text(encoding="utf-8")
     assert "--require-hashes" in body
     assert "flyto-core" in (BACKEND / "requirements-ce.lock").read_text(encoding="utf-8").lower()
     assert '"playwright==1.57.0"' in body
@@ -202,6 +291,21 @@ def test_docker_image_bundles_complete_runtime():
     assert "flyto_require_bundled_runtime=1" in body
     assert "headless=1" in body
     assert "check-bundled-browser.py" in body
+    assert "FLYTO_OFFLINE_DB_PATH=/data/flyto/offline.db" in env_example
+    assert "FLYTO_EXECUTION_DB_PATH=/data/flyto/executions.db" in env_example
+
+
+def test_dark_mode_scoped_selectors_use_descendant_global_form():
+    sources = (
+        "src/ui/web/frontend/src/components/common/LoadingButton.vue",
+        "src/ui/web/frontend/src/components/common/ToggleSwitch.vue",
+        "src/ui/web/frontend/src/components/templates/TemplateCard.vue",
+        "src/ui/web/frontend/src/components/templates/TemplateListItem.vue",
+    )
+
+    for source in sources:
+        body = (ROOT / source).read_text(encoding="utf-8")
+        assert ":global(.dark) " not in body, source
 
 
 def _write_test_wheel(path: Path, package_name: str = "flyto-core") -> str:

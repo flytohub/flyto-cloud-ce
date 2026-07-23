@@ -4,7 +4,7 @@
  * S-Grade: Re-export all metadata store functionality.
  *
  * Split modules:
- * - state.js: State refs and getters
+ * - state.js: State refs
  * - templateActions.js: Template operations
  * - sectionActions.js: Section and component operations
  * - metadataStoreCore.js: Main store
@@ -14,7 +14,7 @@
 export { useBuilderMetadataStore } from './metadataStoreCore'
 
 // State factory (for testing/composition)
-export { createMetadataState, createMetadataGetters } from './state'
+export { createMetadataState } from './state'
 
 // Action factories (for testing/composition)
 export { createTemplateActions } from './templateActions'

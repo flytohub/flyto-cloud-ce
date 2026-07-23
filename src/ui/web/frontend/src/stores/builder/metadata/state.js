@@ -48,9 +48,3 @@ export function createMetadataState() {
     counters,
   }
 }
-
-/**
- * Create metadata store getters
- * @param {Object} state - State refs
- * @returns {Object} Computed getters
- */
