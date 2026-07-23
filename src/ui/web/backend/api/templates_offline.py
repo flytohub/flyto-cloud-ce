@@ -116,7 +116,7 @@ async def create_template(data: TemplateCreateRequest):
 async def update_template(template_id: str, data: TemplateUpdateRequest):
     from gateway.providers.data.models import TemplateUpdateDTO
 
-    fields = {key: value for key, value in data.model_dump().items() if value is not None}
+    fields = data.model_dump(exclude_unset=True)
     if not fields:
         raise HTTPException(status_code=400, detail="No fields to update")
     template = await get_data_provider().templates.update_template(

@@ -38,7 +38,7 @@ COPY --from=frontend /frontend/dist /app/static
 
 RUN adduser --disabled-password --gecos "" appuser \
     && mkdir -p /data/flyto \
-    && chown -R appuser:appuser /data /app
+    && chown -R appuser:appuser /data /app /home/appuser
 
 USER appuser
 EXPOSE 9000

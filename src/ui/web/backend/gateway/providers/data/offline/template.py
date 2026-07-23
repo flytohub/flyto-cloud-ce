@@ -31,13 +31,18 @@ def _parse_dt(value: str | None) -> datetime:
 
 
 def _workflow_data(data: TemplateCreateDTO | TemplateUpdateDTO, existing=None) -> dict:
+    """Merge provided fields into the existing workflow_data blob.
+
+    Uses model_fields_set (not `value is not None`) so a partial update can
+    explicitly clear a field to null without it being treated as "unset".
+    """
     result = dict(existing or {})
-    if data.workflow_data is not None:
+    provided = data.model_fields_set
+    if "workflow_data" in provided and data.workflow_data is not None:
         result.update(data.workflow_data)
     for field in ("steps", "ui", "input_schema", "output_schema", "checkpoints", "error_handling", "error_workflow_id"):
-        value = getattr(data, field)
-        if value is not None:
-            result[field] = value
+        if field in provided:
+            result[field] = getattr(data, field)
     return result
 
 
@@ -117,6 +122,8 @@ class OfflineTemplateProvider:
         if not existing:
             return None
 
+        provided = data.model_fields_set
+
         sets: list[str] = []
         params: list = []
         for field, column, encoder in (
@@ -127,22 +134,22 @@ class OfflineTemplateProvider:
             ("color", "color", None),
             ("params_schema", "params_schema", json.dumps),
         ):
-            value = getattr(data, field)
-            if value is not None:
+            if field in provided:
+                value = getattr(data, field)
                 sets.append(f"{column} = ?")
                 params.append(encoder(value) if encoder else value)
 
-        workflow_fields = (
-            data.workflow_data,
-            data.steps,
-            data.ui,
-            data.input_schema,
-            data.output_schema,
-            data.checkpoints,
-            data.error_handling,
-            data.error_workflow_id,
+        workflow_field_names = (
+            "workflow_data",
+            "steps",
+            "ui",
+            "input_schema",
+            "output_schema",
+            "checkpoints",
+            "error_handling",
+            "error_workflow_id",
         )
-        if any(value is not None for value in workflow_fields):
+        if any(field in provided for field in workflow_field_names):
             sets.extend(("workflow_data = ?", "version = version + 1"))
             params.append(json.dumps(_workflow_data(data, existing.workflow_data)))
 

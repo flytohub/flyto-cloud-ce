@@ -87,6 +87,82 @@ _STARTER_TEMPLATES = [
         ],
         "ui": {"components": [], "sections": [], "viewport": {"x": 0, "y": 0, "zoom": 1}},
     },
+    {
+        "name": "Browser Screenshot Tool",
+        "description": (
+            "Starter template: expose a headless-browser screenshot as a callable "
+            "MCP tool. Pass a URL, get back a PNG screenshot."
+        ),
+        "category": "general",
+        "tags": ["starter", "browser", "screenshot"],
+        "steps": [
+            {
+                "id": "trigger",
+                "module": "flow.trigger",
+                "label": "MCP Trigger",
+                "params": {
+                    "trigger_type": "mcp",
+                    "tool_name": "screenshot_tool",
+                    "tool_description": "Take a screenshot of a webpage.",
+                    "config": {
+                        "input_fields": [
+                            {
+                                "name": "url",
+                                "type": "string",
+                                "description": "The URL to screenshot",
+                                "required": True,
+                            }
+                        ]
+                    },
+                },
+                "position_x": 100,
+                "position_y": 150,
+                "order_index": 0,
+            },
+            {
+                "id": "ensure",
+                "module": "browser.ensure",
+                "label": "Ensure Browser",
+                "params": {"headless": True, "width": 1280, "height": 720},
+                "position_x": 400,
+                "position_y": 150,
+                "order_index": 1,
+            },
+            {
+                "id": "goto",
+                "module": "browser.goto",
+                "label": "Go to URL",
+                "params": {
+                    "url": "${url}",
+                    "wait_until": "domcontentloaded",
+                    "timeout_ms": 30000,
+                    "ssrf_protection": True,
+                },
+                "position_x": 700,
+                "position_y": 150,
+                "order_index": 2,
+            },
+            {
+                "id": "shot",
+                "module": "browser.screenshot",
+                "label": "Take Screenshot",
+                "params": {"path": "screenshot.png", "full_page": False, "format": "png"},
+                "position_x": 1000,
+                "position_y": 150,
+                "order_index": 3,
+            },
+            {
+                "id": "close",
+                "module": "browser.close",
+                "label": "Close Browser",
+                "params": {},
+                "position_x": 1300,
+                "position_y": 150,
+                "order_index": 4,
+            },
+        ],
+        "ui": {"components": [], "sections": [], "viewport": {"x": 0, "y": 0, "zoom": 1}},
+    },
 ]
 
 
